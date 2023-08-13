@@ -1,0 +1,9 @@
+Substring extraction (function similar to slicing operator in Python, RIGHT and LEFT functions from EXCEL)
+
+String trimming (remove leading/trailing whitespace)
+
+Case conversion (e.g., to upper/lower case)
+
+String splitting
+
+document how the functions work as comments
