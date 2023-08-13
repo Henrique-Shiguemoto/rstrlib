@@ -1,0 +1,5 @@
+*.exe 
+*.o 
+*.ilk 
+*.pdb
+TODO.txt

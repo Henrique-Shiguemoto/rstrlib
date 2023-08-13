@@ -8,6 +8,6 @@ void PrintString(rstring* string){
 }
 
 int main(int argc, char const *argv[]){
-	
+	printf("sizeof(rstring) = %llu\n", sizeof(rstring));
 	return 0;
 }
