@@ -32,6 +32,10 @@ rstring* CreateEmptyString(size_t capacity){
 	return CreateString("", capacity);
 }
 
+rstring* CopyString(rstring* string){
+	return CreateString(string->characters, string->capacity);
+}
+
 void DeleteString(rstring* string){
 	free(string->characters);
 	string->characters = NULL;
@@ -78,4 +82,26 @@ int CompareStrings(rstring* string1, rstring* string2){
 		currentIndex++;
 	}
 	return 1;
+}
+
+rstring* ExtractSubstring(rstring* string, size_t from, size_t to){
+	if(!string || from > string->length || to > string->length || to < from) return NULL;
+
+	rstring* newString = CreateEmptyString(to - from + 1);
+	size_t currentIndex = from;
+	while(currentIndex < to && currentIndex < string->length){
+		newString->characters[currentIndex - from] = string->characters[currentIndex];
+		currentIndex++;
+	}
+	newString->characters[currentIndex - from] = '\0';
+	newString->length = to - from;
+	return newString;
+}
+
+rstring* ExtractLeftSubstring(rstring* string, size_t characterCount){
+	return ExtractSubstring(string, 0, characterCount);
+}
+
+rstring* ExtractRightSubstring(rstring* string, size_t characterCount){
+	return ExtractSubstring(string, string->length - characterCount, string->length);
 }

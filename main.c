@@ -7,7 +7,27 @@ void PrintString(rstring* string){
 	printf("Capacity: %llu\n", string->capacity);
 }
 
+void PrintEveryCharacter(rstring* string){
+	size_t currentIndex = 0;
+	while(currentIndex < string->length){
+		printf("'%c'\t", string->characters[currentIndex]);
+		currentIndex++;
+	}
+}
+
 int main(int argc, char const *argv[]){
-	printf("sizeof(rstring) = %llu\n", sizeof(rstring));
+	rstring* first_string = CreateString("Hello World", 15);
+	rstring* r = ExtractRightSubstring(first_string, 5);
+	rstring* l = ExtractLeftSubstring(first_string, 5);
+	
+	PrintString(first_string);
+	PrintString(r);
+	PrintString(l);
+	PrintEveryCharacter(r);
+	PrintEveryCharacter(l);
+
+	DeleteString(first_string);
+	DeleteString(r);
+	DeleteString(l);
 	return 0;
 }

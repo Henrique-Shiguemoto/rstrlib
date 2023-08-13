@@ -8,10 +8,14 @@ typedef struct rstring{
 	size_t capacity;
 } rstring;
 
-size_t CalculateStringLength(const char* string, size_t capacity);
-rstring* CreateString(const char* characters, size_t capacity);
-rstring* CreateEmptyString(size_t capacity);
-void DeleteString(rstring* string);
-rstring* ConcatenateStrings(rstring* string1, rstring* string2);
-size_t FindFirstOccurrenceOf(char characterToFind, rstring* string);
-int CompareStrings(rstring* string1, rstring* string2);
+size_t 		CalculateStringLength(const char* string, size_t capacity);
+rstring* 	CreateString(const char* characters, size_t capacity);
+rstring* 	CopyString(rstring* string);
+rstring* 	CreateEmptyString(size_t capacity);
+void 		DeleteString(rstring* string);
+rstring* 	ConcatenateStrings(rstring* string1, rstring* string2);
+size_t 		FindFirstOccurrenceOf(char characterToFind, rstring* string);
+int 		CompareStrings(rstring* string1, rstring* string2);
+rstring* 	ExtractSubstring(rstring* string, size_t from, size_t to);
+rstring* 	ExtractLeftSubstring(rstring* string, size_t characterCount);
+rstring* 	ExtractRightSubstring(rstring* string, size_t characterCount);
