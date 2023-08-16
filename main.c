@@ -13,9 +13,5 @@ void PrintEveryCharacter(rstring* string){
 }
 
 int main(int argc, const char *argv[]){
-	rstring r = CreateString("Hello World");
-	PrintString(&r);
-	PrintEveryCharacter(&r);
-	DeleteString(&r);
 	return 0;
 }

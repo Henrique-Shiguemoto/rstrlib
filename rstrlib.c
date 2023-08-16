@@ -1,6 +1,7 @@
 #include "rstrlib.h"
 
 size_t CalculateStringLength(char* characters){
+	if(!characters) return 0;
 	size_t currentLength = 0;
 	while(characters[currentLength] != '\0' && currentLength < STRING_LENGTH_MAX) currentLength++;
 	return currentLength;
@@ -184,6 +185,7 @@ int IsDigit(char c){
 }
 
 int CalculateNumberOfLetters(rstring* string){
+	if(!string) return 0;
 	int count = 0;
 
 	size_t currentIndex = 0;
@@ -196,6 +198,7 @@ int CalculateNumberOfLetters(rstring* string){
 }
 
 int CalculateNumberOfDigits(rstring* string){
+	if(!string) return 0;
 	int count = 0;
 
 	size_t currentIndex = 0;
