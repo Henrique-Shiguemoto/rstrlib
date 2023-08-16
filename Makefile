@@ -1,4 +1,4 @@
-CC=gcc
+CC=clang
 BIN=main.exe
 SRC=main.c rstrlib.c
 DEBUGGER=gdb
