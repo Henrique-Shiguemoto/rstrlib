@@ -69,7 +69,7 @@ size_t 		FindFirstOccurrenceOf(char characterToFind, rstring* string);
  * In case NULL is passed as a parameter, 0 is returned.
  * 
  * */
-int 		CompareCharacters(rstring* string1, rstring* string2);
+int 		CompareStrings(rstring* string1, rstring* string2);
 
 /**
  * 
@@ -77,7 +77,7 @@ int 		CompareCharacters(rstring* string1, rstring* string2);
  * In case NULL is passed as a parameter, 0 is returned.
  * 
  * */
-int 		CompareCharactersCaseInsensitive(rstring* string1, rstring* string2);
+int 		CompareStringsCaseInsensitive(rstring* string1, rstring* string2);
 
 /**
  * 

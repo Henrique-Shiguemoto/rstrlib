@@ -40,7 +40,7 @@ rstring CopyString(rstring* inputString){
 
 int ConcatenateStrings(rstring* in_out_string, rstring* string2){
 	if(!in_out_string || !string2) return 0;
-	in_out_string->characters = realloc(in_out_string->characters, in_out_string->length + string2->length);
+	in_out_string->characters = realloc(in_out_string->characters, in_out_string->length + string2->length + 1);
 	if(!in_out_string->characters) return 0;
 
 	size_t currentIndex = 0;
@@ -54,6 +54,8 @@ int ConcatenateStrings(rstring* in_out_string, rstring* string2){
 }
 
 size_t FindFirstOccurrenceOf(char characterToFind, rstring* string){
+	if(!string) return -1;
+
 	size_t currentIndex = 0;
 	while(currentIndex < string->length && string->characters[currentIndex] != '\0'){
 		if(string->characters[currentIndex] == characterToFind) return currentIndex;
@@ -62,8 +64,8 @@ size_t FindFirstOccurrenceOf(char characterToFind, rstring* string){
 	return -1;
 }
 
-int CompareCharacters(rstring* string1, rstring* string2){
-	if(string1->length != string2->length || !string1 || !string2) return 0;
+int CompareStrings(rstring* string1, rstring* string2){
+	if(!string1 || !string2 || string1->length != string2->length) return 0;
 
 	size_t currentIndex = 0;
 	while(currentIndex < string1->length){
@@ -73,7 +75,7 @@ int CompareCharacters(rstring* string1, rstring* string2){
 	return 1;
 }
 
-int CompareCharactersCaseInsensitive(rstring* string1, rstring* string2){
+int CompareStringsCaseInsensitive(rstring* string1, rstring* string2){
 	if(!string1 || !string2 || string1->length != string2->length) return 0;
 	
 	size_t currentIndex = 0;
@@ -214,9 +216,15 @@ int SplitStringByDelimiter(rstring* string, char delimiter, rstring* token){
 	if(!string) return 0;
 
 	size_t currentIndex = 0;
-	while(string->characters[currentIndex] != delimiter && string->characters[currentIndex] != '\0') currentIndex++;
+	while(string->characters[currentIndex] != delimiter && string->characters[currentIndex] != '\0') 
+		currentIndex++;
 	if(currentIndex < string->length - 1){
-		token->characters = realloc(token->characters, currentIndex);
+		if(currentIndex > token->length){
+			token->characters = realloc(token->characters, currentIndex + 1);
+			if(!token->characters) return 0;
+		}
+		//we don't need to reallocate if we want to shrink, just use the same buffer and terminate it with '\0'
+
 		size_t copyIndex = 0;
 		while(copyIndex < currentIndex){
 			token->characters[copyIndex] = string->characters[copyIndex];
@@ -234,6 +242,7 @@ int SplitStringByDelimiter(rstring* string, char delimiter, rstring* token){
 
 int ReverseString(rstring* in_out_string){
 	if(!in_out_string) return 0;
+	if(in_out_string->length == 1 || in_out_string->length == 0) return 1;
 
 	char aux = 0;
 	size_t startIndex = 0;
@@ -252,11 +261,21 @@ int ReverseString(rstring* in_out_string){
 int ConvertStringToInt(rstring* string, int* outputNumber){
 	if(!string || !outputNumber) return 0;
 	int r = sscanf(string->characters, "%i", outputNumber);
-	return r == -1 ? 0 : 1;
+	if(r == -1 || r == 0){
+		//failure or couldn't convert any bytes
+		*outputNumber = 0;
+		return 0;
+	}
+	return 1;
 }
 
 int ConvertStringToFloat(rstring* string, float* outputNumber){
 	if(!string || !outputNumber) return 0;
 	int r = sscanf(string->characters, "%f", outputNumber);
-	return r == -1 ? 0 : 1;
+	if(r == -1 || r == 0){
+		//failure
+		*outputNumber = 0.0f;
+		return 0;
+	}
+	return 1;
 }
