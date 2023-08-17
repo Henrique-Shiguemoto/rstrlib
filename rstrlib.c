@@ -26,6 +26,10 @@ rstring CreateString(char* characters){
 	return newString;
 }
 
+rstring CreateStringInStack(char* characters){
+	return (rstring){.characters = characters, .length = CalculateStringLength(characters)};
+}
+
 void DeleteString(rstring* string){
 	if(string){
 		free(string->characters);

@@ -6,21 +6,24 @@
 
 int main(int argc, const char *argv[]){
 	// Creating strings (characters in ASCII are supported only)
-	rstring s0 = CreateString(NULL); 
-	rstring s1 = CreateString("Hello World"); //can use literals
+	rstring s = CreateStringInStack("Stack Allocation");
+	rstring s0 = CreateString(NULL);
+	rstring s1 = CreateString("Heap Allocation"); //can use literals
 	char* c_buffer = "yy";
 	rstring s2 = CreateString(c_buffer); // or just char buffers (maybe map a file? which isn't very big lul)
 	rstring s3 = CreateString("");
 	rstring s4 = CreateString("AHSOANONQ WDNJNDOAA_DKWNDE DIADNEU[.NDAOKSAPSDU9A SAKMSASMA^CAIENFAOIC]NACASASK");
 
 	// Calculating characters array size
+	RSTRLIB_ASSERT(CalculateStringLength(s.characters) == 16);
 	RSTRLIB_ASSERT(CalculateStringLength(s0.characters) == 0);
-	RSTRLIB_ASSERT(CalculateStringLength(s1.characters) == 11);
+	RSTRLIB_ASSERT(CalculateStringLength(s1.characters) == 15);
 	RSTRLIB_ASSERT(CalculateStringLength(s2.characters) == 2);
 	RSTRLIB_ASSERT(CalculateStringLength(s3.characters) == 0);
 	RSTRLIB_ASSERT(CalculateStringLength(s4.characters) == 79);
 
 	// Every string created by CreateString needs to be deleted
+	// Stack allocated rstrings don't need to be deallocated (duh)
 	DeleteString(&s1); 
 	DeleteString(&s2);
 	DeleteString(&s3);

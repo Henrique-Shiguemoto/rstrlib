@@ -31,6 +31,16 @@ rstring		CreateString(char* characters);
 
 /**
  * 
+ * Returns a rstring structure in stack memory with information according to the "characters" parameter.
+ * In case NULL is passed as a parameter, a zero-initialized rstring structure is returned.
+ * 
+ * It is necessary to call DeleteString() after the rstring structure isn't in use anymore.
+ * 
+ * */
+rstring     CreateStringInStack(char* characters);
+
+/**
+ * 
  * Deletes an rstring structure from memory.
  * In case NULL is passed as a parameter, nothing happens.
  * 
