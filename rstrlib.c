@@ -54,7 +54,7 @@ int ConcatenateStrings(rstring* in_out_string, rstring* string2){
 }
 
 size_t FindFirstOccurrenceOf(char characterToFind, rstring* string){
-	if(!string) return -1;
+	if(!string || string->length == 0) return -1;
 
 	size_t currentIndex = 0;
 	while(currentIndex < string->length && string->characters[currentIndex] != '\0'){
@@ -64,12 +64,30 @@ size_t FindFirstOccurrenceOf(char characterToFind, rstring* string){
 	return -1;
 }
 
+int IsCharactersInString(char characterToFind, rstring* string){
+	return FindFirstOccurrenceOf(characterToFind, string) == (size_t)-1 ? 0 : 1;
+}
+
 int CompareStrings(rstring* string1, rstring* string2){
 	if(!string1 || !string2 || string1->length != string2->length) return 0;
 
 	size_t currentIndex = 0;
 	while(currentIndex < string1->length){
 		if(string1->characters[currentIndex] != string2->characters[currentIndex]) return 0;
+		currentIndex++;
+	}
+	return 1;
+}
+
+int CompareStringToCStr(rstring* string1, char* string2){
+	if(!string1 || !string2) return 0;
+
+	size_t cStrSize = CalculateStringLength(string2);
+	if(cStrSize != string1->length) return 0;
+
+	size_t currentIndex = 0;
+	while(currentIndex < string1->length){
+		if(string1->characters[currentIndex] != string2[currentIndex]) return 0;
 		currentIndex++;
 	}
 	return 1;

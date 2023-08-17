@@ -65,11 +65,26 @@ size_t 		FindFirstOccurrenceOf(char characterToFind, rstring* string);
 
 /**
  * 
+ * Returns 1 if "characterToFind" is located in the "characters" array of "string", 0 otherwise.
+ * 
+ * */
+int         IsCharactersInString(char characterToFind, rstring* string);
+
+/**
+ * 
  * Compares lengths and characters from both parameters, returns 1 on match.
  * In case NULL is passed as a parameter, 0 is returned.
  * 
  * */
 int 		CompareStrings(rstring* string1, rstring* string2);
+
+/**
+ * 
+ * Compares lengths and characters from both parameters, returns 1 on match.
+ * In case NULL is passed as a parameter, 0 is returned.
+ * 
+ * */
+int         CompareStringToCStr(rstring* string1, char* string2);
 
 /**
  * 
@@ -223,5 +238,7 @@ int 		ConvertStringToInt(rstring* string, int* outputNumber);
  * 
  * */
 int 		ConvertStringToFloat(rstring* string, float* outputNumber);
+
+
 
 #endif // RSTRLIB_H

@@ -54,7 +54,7 @@ int main(int argc, const char *argv[]){
 
 // ----------------------------------------------------------------------------------------------------------------
 
-	// Character finding
+	// Character looking
 	rstring s8 = CreateString("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z");
 	
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf('a', &s8) == 0);
@@ -63,6 +63,10 @@ int main(int argc, const char *argv[]){
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf(' ', &s8) == 1);
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf('Q', &s8) == 84);
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf('B', NULL) == (size_t)-1);
+
+	RSTRLIB_ASSERT(IsCharactersInString('Q', &s8));
+	RSTRLIB_ASSERT(IsCharactersInString('f', &s8));
+	RSTRLIB_ASSERT(!IsCharactersInString('?', &s8));
 
 	DeleteString(&s8);
 
@@ -85,6 +89,10 @@ int main(int argc, const char *argv[]){
 	RSTRLIB_ASSERT(CompareStringsCaseInsensitive(&s9, &s13));
 	RSTRLIB_ASSERT(!CompareStringsCaseInsensitive(&s9, NULL));
 	RSTRLIB_ASSERT(!CompareStringsCaseInsensitive(NULL, NULL));
+	RSTRLIB_ASSERT(CompareStringToCStr(&s10, "RSTRLIB.H"));
+	RSTRLIB_ASSERT(!CompareStringToCStr(&s12, "rstrlib.hpp"));
+	RSTRLIB_ASSERT(!CompareStringToCStr(&s13, NULL));
+	RSTRLIB_ASSERT(!CompareStringToCStr(NULL, "Hello"));
 
 	DeleteString(&s9);
 	DeleteString(&s10);
