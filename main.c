@@ -6,15 +6,26 @@
 
 int main(int argc, const char *argv[]){
 	// Creating strings (characters in ASCII are supported only)
-	rstring s = CreateStringInStack("Stack Allocation");
-	rstring s0 = CreateString(NULL);
-	rstring s1 = CreateString("Heap Allocation"); //can use literals
+	
+	// passing a non-const char* like this makes it possible to change the characters while being on the stack
+	char* s_buffer = "Hello";
+	rstring r = CreateStringInStack(s_buffer); 
+
+	// passing a string literal like this make it impossible to change the characters in the array (because it is a const char*)	
+	//		it's pretty much just a constant
+	rstring s = CreateStringInStack("Stack Allocation"); 
+	rstring s0 = CreateStringInStack(NULL);
+	
+	rstring s1 = CreateString("Heap Allocation");
+
+	// or just char buffers (maybe map a file? which isn't very big lul) (since this isn't a const char*, you can change the characters)
 	char* c_buffer = "yy";
-	rstring s2 = CreateString(c_buffer); // or just char buffers (maybe map a file? which isn't very big lul)
+	rstring s2 = CreateString(c_buffer);
 	rstring s3 = CreateString("");
 	rstring s4 = CreateString("AHSOANONQ WDNJNDOAA_DKWNDE DIADNEU[.NDAOKSAPSDU9A SAKMSASMA^CAIENFAOIC]NACASASK");
 
 	// Calculating characters array size
+	RSTRLIB_ASSERT(CalculateStringLength(r.characters) == 5);
 	RSTRLIB_ASSERT(CalculateStringLength(s.characters) == 16);
 	RSTRLIB_ASSERT(CalculateStringLength(s0.characters) == 0);
 	RSTRLIB_ASSERT(CalculateStringLength(s1.characters) == 15);
@@ -58,7 +69,7 @@ int main(int argc, const char *argv[]){
 // ----------------------------------------------------------------------------------------------------------------
 
 	// Character looking
-	rstring s8 = CreateString("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z");
+	rstring s8 = CreateStringInStack("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z");
 	
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf('a', &s8) == 0);
 	RSTRLIB_ASSERT(FindFirstOccurrenceOf('Z', &s8) == 102);
@@ -70,8 +81,6 @@ int main(int argc, const char *argv[]){
 	RSTRLIB_ASSERT(IsCharactersInString('Q', &s8));
 	RSTRLIB_ASSERT(IsCharactersInString('f', &s8));
 	RSTRLIB_ASSERT(!IsCharactersInString('?', &s8));
-
-	DeleteString(&s8);
 
 // ----------------------------------------------------------------------------------------------------------------
 
