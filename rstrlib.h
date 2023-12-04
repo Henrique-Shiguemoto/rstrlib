@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 typedef struct rs_string{
-	int length;
+	int length; // DON'T CHANGE THIS ATTRIBUTE!
 	char* buffer;
 } rs_string;
 
@@ -37,6 +37,8 @@ int 		rs_trim_left(rs_string* s);
 int 		rs_trim_right(rs_string* s);
 int  		rs_convert_upper(rs_string* s);
 int  		rs_convert_lower(rs_string* s);
+int 		rs_convert_to_int(rs_string* s, int* n);
+int 		rs_convert_to_float(rs_string* s, float* n);
 int  		rs_is_upper(char c);
 int  		rs_is_lower(char c);
 int  		rs_is_letter(char c);
@@ -45,8 +47,6 @@ int  		rs_count_letters(rs_string* s);
 int  		rs_count_digits(rs_string* s);
 int 	  	rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token);
 int 		rs_reverse(rs_string* s);
-int 		rs_convert_to_int(rs_string* s, int* n);
-int 		rs_convert_to_float(rs_string* s, float* n);
 void  		rs_print(rs_string* s);
 
 #endif // RSTRLIB_H
