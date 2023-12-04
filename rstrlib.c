@@ -1,303 +1,366 @@
 #include "rstrlib.h"
 
-size_t CalculateStringLength(char* characters){
-	if(!characters) return 0;
-	size_t currentLength = 0;
-	while(characters[currentLength] != '\0' && currentLength < STRING_LENGTH_MAX) currentLength++;
+int rs_length(const char* s){
+	int currentLength = 0;
+	while(*s++ && currentLength < RS_STRING_MAX_LENGTH) currentLength++;
 	return currentLength;
 }
 
-rstring CreateString(char* characters){
-	if(!characters) return (rstring){0};
+rs_string rs_create(const char* s){
+	if(!s) return (rs_string){0};
 
-	rstring newString = {0};
-	newString.length = CalculateStringLength(characters);
-	if(newString.length == STRING_LENGTH_MAX) return (rstring){0};
+	rs_string newString = {0};
+	newString.length = rs_length(s);
+	if(newString.length == RS_STRING_MAX_LENGTH) return (rs_string){0};
 	
-	newString.characters = malloc(sizeof(char) * newString.length + 1);
+	newString.buffer = malloc(sizeof(char) * newString.length + 1);
 
-	size_t currentIndex = 0;
+	int currentIndex = 0;
 	while(currentIndex < newString.length){
-		newString.characters[currentIndex] = characters[currentIndex];
+		newString.buffer[currentIndex] = s[currentIndex];
 		currentIndex++;
 	}
-	newString.characters[currentIndex] = '\0';
+	newString.buffer[currentIndex] = '\0';
 
 	return newString;
 }
 
-rstring CreateStringInStack(char* characters){
-	return (rstring){.characters = characters, .length = CalculateStringLength(characters)};
-}
 
-void DeleteString(rstring* string){
-	if(string){
-		free(string->characters);
-		string->characters = NULL;
-		string->length = 0;
+/**
+ * 
+ * Since we're calling free, the user has to make sure that s->buffer is from the heap (by using rs_create or rs_copy).
+ * 		(source: https://stackoverflow.com/questions/2693655/free-on-stack-memory)
+ * 
+ * */
+void rs_delete(rs_string* s){
+	if(!s) return;
+	if(s->buffer){
+		free(s->buffer);
+		s->buffer = NULL;
+		s->length = 0;
 	}
 }
 
-rstring CopyString(rstring* inputString){
-	return !inputString ? (rstring){0} : CreateString(inputString->characters);
-}
+/**
+ * 
+ * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
+ * 		or it has to be NULL (like rs_string s = {0};, for example)
+ * 
+ * If dest_s->buffer points to stack memory (unless it's just the value NULL), we'll have an undefined behavior from the free() function.
+ * 		(source: https://stackoverflow.com/questions/2693655/free-on-stack-memory)
+ * 
+ * */
+int	rs_copy(rs_string* src_s, rs_string* dest_s){
+	if(!src_s || !dest_s || !src_s->buffer) return RS_FAILURE;
 
-int ConcatenateStrings(rstring* in_out_string, rstring* string2){
-	if(!in_out_string || !string2) return 0;
-	in_out_string->characters = realloc(in_out_string->characters, in_out_string->length + string2->length + 1);
-	if(!in_out_string->characters) return 0;
+	dest_s->length = src_s->length;
 
-	size_t currentIndex = 0;
-	while(currentIndex < string2->length){
-		in_out_string->characters[in_out_string->length + currentIndex] = string2->characters[currentIndex];
-		currentIndex++;
+	if(dest_s->buffer) free(dest_s->buffer);
+	
+	dest_s->buffer = malloc(sizeof(char) * dest_s->length + 1);
+
+	int i = 0;
+	while(i < dest_s->length){
+		dest_s->buffer[i] = src_s->buffer[i];
+		i++;
 	}
-	in_out_string->characters[in_out_string->length + string2->length] = '\0';
-	in_out_string->length += string2->length;
-	return 1;
+	dest_s->buffer[i] = '\0';
+
+	return RS_SUCCESS;
 }
 
-size_t FindFirstOccurrenceOf(char characterToFind, rstring* string){
-	if(!string || string->length == 0) return -1;
+/**
+ * 
+ * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
+ * 		or it has to be NULL (like rs_string s = {0};, for example)
+ * 
+ * If dest_s->buffer points to stack memory (unless it's just the value NULL), we'll have an undefined behavior from the realloc() function.
+ * 		(source: https://linux.die.net/man/3/realloc)
+ * 
+ * */
+int rs_concatenate(rs_string* dest_s, rs_string* str_to_append){
+	if(!dest_s || !str_to_append){
+		return RS_FAILURE;
+	}
+	if(!str_to_append->buffer){
+		return RS_SUCCESS;
+	}
+	if(!dest_s->buffer){
+		return rs_copy(str_to_append, dest_s);
+	}
 
-	size_t currentIndex = 0;
-	while(currentIndex < string->length && string->characters[currentIndex] != '\0'){
-		if(string->characters[currentIndex] == characterToFind) return currentIndex;
+	char* temp = realloc(dest_s->buffer, dest_s->length + str_to_append->length + 1);
+	if(!temp) return RS_FAILURE;
+	
+	dest_s->buffer = temp;
+
+	int i = 0;
+	while(i < str_to_append->length){
+		dest_s->buffer[dest_s->length + i] = str_to_append->buffer[i];
+		i++;
+	}
+	dest_s->buffer[dest_s->length + str_to_append->length] = '\0';
+	dest_s->length += str_to_append->length;
+	return RS_SUCCESS;
+}
+
+int rs_first_occurrence(char c, rs_string* s){
+	if(!s || !s->buffer || s->length == 0) return -1;
+
+	int currentIndex = 0;
+	while(currentIndex < s->length && s->buffer[currentIndex] != '\0'){
+		if(s->buffer[currentIndex] == c) return currentIndex;
 		currentIndex++;
 	}
 	return -1;
 }
 
-int IsCharactersInString(char characterToFind, rstring* string){
-	return FindFirstOccurrenceOf(characterToFind, string) == (size_t)-1 ? 0 : 1;
+int rs_is_char_in_string(char c, rs_string* s){
+	return rs_first_occurrence(c, s) == -1 ? RS_FAILURE : RS_SUCCESS;
 }
 
-int CompareStrings(rstring* string1, rstring* string2){
-	if(!string1 || !string2 || string1->length != string2->length) return 0;
+int rs_compare(rs_string* s1, rs_string* s2){
+	if(!s1 || !s2 || !s1->buffer || !s2->buffer || s1->length != s2->length) return RS_FAILURE;
 
-	size_t currentIndex = 0;
-	while(currentIndex < string1->length){
-		if(string1->characters[currentIndex] != string2->characters[currentIndex]) return 0;
+	int currentIndex = 0;
+	while(currentIndex < s1->length){
+		if(s1->buffer[currentIndex] != s2->buffer[currentIndex]) return RS_FAILURE;
 		currentIndex++;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int CompareStringToCStr(rstring* string1, char* string2){
-	if(!string1 || !string2) return 0;
+int rs_compare_to_cstr(rs_string* rs_str, char* cstr){
+	if(!rs_str || !rs_str->buffer || !cstr) return RS_FAILURE;
 
-	size_t cStrSize = CalculateStringLength(string2);
-	if(cStrSize != string1->length) return 0;
+	int cStrSize = rs_length(cstr);
+	if(cStrSize != rs_str->length) return RS_FAILURE;
 
-	size_t currentIndex = 0;
-	while(currentIndex < string1->length){
-		if(string1->characters[currentIndex] != string2[currentIndex]) return 0;
+	int currentIndex = 0;
+	while(currentIndex < rs_str->length){
+		if(rs_str->buffer[currentIndex] != cstr[currentIndex]) return RS_FAILURE;
 		currentIndex++;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int CompareStringsCaseInsensitive(rstring* string1, rstring* string2){
-	if(!string1 || !string2 || string1->length != string2->length) return 0;
+int rs_compare_case_insensitive(rs_string* s1, rs_string* s2){
+	if(!s1 || !s1->buffer || !s2 || !s2->buffer || s1->length != s2->length) return RS_FAILURE;
 	
-	size_t currentIndex = 0;
-	while(currentIndex < string1->length){
-		char c1 = string1->characters[currentIndex];
-		char c2 = string2->characters[currentIndex];
-		if(c1 != c2 && c1 - 32 != c2 && c1 != c2 - 32) return 0;
+	int currentIndex = 0;
+	while(currentIndex < s1->length){
+		char c1 = s1->buffer[currentIndex];
+		char c2 = s2->buffer[currentIndex];
+		if(c1 != c2 && c1 - 32 != c2 && c1 != c2 - 32) return RS_FAILURE;
 		currentIndex++;
 	}
 
-	return 1;
+	return RS_FAILURE;
 }
 
-int ExtractSubstring(rstring* in_out_string, size_t from, size_t to){
-	if(!in_out_string || from > in_out_string->length || to > in_out_string->length || to < from) return 0;
+int rs_compare_to_cstr_case_insensitive(rs_string* rs_str, char* cstr){
+	if(!rs_str || !rs_str->buffer || !cstr) return RS_FAILURE;
 
-	size_t finalLength = to - from + 1;
-	size_t currentIndex = 0;
+	int cStrSize = rs_length(cstr);
+	if(cStrSize != rs_str->length) return RS_FAILURE;
+
+	int currentIndex = 0;
+	while(currentIndex < rs_str->length){
+		char c1 = rs_str->buffer[currentIndex];
+		char c2 = cstr[currentIndex];
+		if(c1 != c2 && c1 - 32 != c2 && c1 != c2 - 32) return RS_FAILURE;
+		currentIndex++;
+	}
+	return RS_SUCCESS;
+}
+
+int rs_extract(rs_string* s, int from, int to){
+	if(!s || !s->buffer || from > s->length || to > s->length || to < from) return RS_FAILURE;
+
+	int finalLength = to - from + 1;
+	int currentIndex = 0;
 	while(currentIndex < finalLength){
-		in_out_string->characters[currentIndex] = in_out_string->characters[currentIndex + from];
+		s->buffer[currentIndex] = s->buffer[currentIndex + from];
 		currentIndex++;
 	}
-	in_out_string->characters[finalLength] = '\0';
-	in_out_string->length = finalLength;
-	return 1;
+	s->buffer[finalLength] = '\0';
+	s->length = finalLength;
+	return RS_SUCCESS;
 }
 
-int ExtractLeftSubstring(rstring* in_out_string, size_t characterCount){
-	return ExtractSubstring(in_out_string, 0, characterCount - 1);
+int rs_extract_left(rs_string* s, int characterCount){
+	return rs_extract(s, 0, characterCount - 1);
 }
 
-int ExtractRightSubstring(rstring* in_out_string, size_t characterCount){
-	return ExtractSubstring(in_out_string, in_out_string->length - characterCount, in_out_string->length - 1);
+int rs_extract_right(rs_string* s, int characterCount){
+	return rs_extract(s, s->length - characterCount, s->length - 1);
 }
 
-int TrimString(rstring* in_out_string){
-	if(!in_out_string) return 0;
+int rs_trim(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
 
-	size_t startIndex = 0;
-	size_t endIndex = in_out_string->length - 1;
-	while(in_out_string->characters[startIndex] == ' ' || in_out_string->characters[endIndex] == ' '){
-		if(in_out_string->characters[startIndex] == ' ') startIndex++;
-		if(in_out_string->characters[endIndex] 	 == ' ') endIndex--;
+	int startIndex = 0;
+	int endIndex = s->length - 1;
+	while(s->buffer[startIndex] == ' ' || s->buffer[endIndex] == ' '){
+		if(s->buffer[startIndex] == ' ') startIndex++;
+		if(s->buffer[endIndex] 	 == ' ') endIndex--;
 	}
 
-	ExtractSubstring(in_out_string, startIndex, endIndex);
-	return 1;
+	rs_extract(s, startIndex, endIndex);
+	return RS_SUCCESS;
 }
 
-int TrimStringLeft(rstring* in_out_string){
-	if(!in_out_string) return 0;
+int rs_trim_left(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
 
-	size_t startIndex = 0;
-	while(in_out_string->characters[startIndex] == ' ') startIndex++;
+	int startIndex = 0;
+	while(s->buffer[startIndex] == ' ') startIndex++;
 
-	ExtractSubstring(in_out_string, startIndex, in_out_string->length - 1);
-	return 1;
+	rs_extract(s, startIndex, s->length - 1);
+	return RS_SUCCESS;
 }
 
-int TrimStringRight(rstring* in_out_string){
-	if(!in_out_string) return 0;
+int rs_trim_right(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
 
-	size_t endIndex = in_out_string->length - 1;
-	while(in_out_string->characters[endIndex] == ' ') endIndex--;
+	int endIndex = s->length - 1;
+	while(s->buffer[endIndex] == ' ') endIndex--;
 
-	ExtractSubstring(in_out_string, 0, endIndex);
-	return 1;
+	rs_extract(s, 0, endIndex);
+	return RS_SUCCESS;
 }
 
 
-int ConvertToUpperCase(rstring* in_out_string){
-	if(!in_out_string) return 0;
-	size_t currentIndex = 0;
-	while(currentIndex < in_out_string->length){
-		if(IsLowerCase(in_out_string->characters[currentIndex])) in_out_string->characters[currentIndex] -= 32;
+int rs_convert_upper(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
+	int currentIndex = 0;
+	while(currentIndex < s->length){
+		if(rs_is_lower(s->buffer[currentIndex])) s->buffer[currentIndex] -= 32;
 		currentIndex++;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int ConvertToLowerCase(rstring* in_out_string){
-	if(!in_out_string) return 0;
-	size_t currentIndex = 0;
-	while(currentIndex < in_out_string->length){
-		if(IsUpperCase(in_out_string->characters[currentIndex])) in_out_string->characters[currentIndex] += 32;
+int rs_convert_lower(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
+	int currentIndex = 0;
+	while(currentIndex < s->length){
+		if(rs_is_upper(s->buffer[currentIndex])) s->buffer[currentIndex] += 32;
 		currentIndex++;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int IsUpperCase(char c){
-	if('A' <= c && c <= 'Z') return 1;
-	return 0;
+int rs_is_upper(char c){
+	return ('A' <= c && c <= 'Z') ? RS_SUCCESS : RS_FAILURE;
 }
 
-int IsLowerCase(char c){
-	if('a' <= c && c <= 'z') return 1;
-	return 0;
+int rs_is_lower(char c){
+	return ('a' <= c && c <= 'z') ? RS_SUCCESS : RS_FAILURE;
 }
 
-int IsLetter(char c){
-	if(IsUpperCase(c) || IsLowerCase(c)) return 1;
-	return 0;
+int rs_is_letter(char c){
+	return (rs_is_upper(c) || rs_is_lower(c)) ? RS_SUCCESS : RS_FAILURE;
 }
 
-int IsDigit(char c){
-	if('0' <= c && c <= '9') return 1;
-	return 0;
+int rs_is_digit(char c){
+	return ('0' <= c && c <= '9') ? RS_SUCCESS : RS_FAILURE;
 }
 
-int CalculateNumberOfLetters(rstring* string){
-	if(!string) return 0;
+int rs_count_letters(rs_string* s){
+	if(!s || !s->buffer) return 0;
 	int count = 0;
 
-	size_t currentIndex = 0;
-	while(currentIndex < string->length){
-		if(IsLetter(string->characters[currentIndex])) count++;
+	int currentIndex = 0;
+	while(currentIndex < s->length){
+		if(rs_is_letter(s->buffer[currentIndex])) count++;
 		currentIndex++;
 	}
 
 	return count;
 }
 
-int CalculateNumberOfDigits(rstring* string){
-	if(!string) return 0;
+int rs_count_digits(rs_string* s){
+	if(!s || !s->buffer) return 0;
 	int count = 0;
 
-	size_t currentIndex = 0;
-	while(currentIndex < string->length){
-		if(IsDigit(string->characters[currentIndex])) count++;
+	int currentIndex = 0;
+	while(currentIndex < s->length){
+		if(rs_is_digit(s->buffer[currentIndex])) count++;
 		currentIndex++;
 	}
 
 	return count;
 }
 
-int SplitStringByDelimiter(rstring* string, char delimiter, rstring* token){
-	if(!string) return 0;
+int rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token){
+	if(!s || !s->buffer || !token) return RS_FAILURE;
 
-	size_t currentIndex = 0;
-	while(string->characters[currentIndex] != delimiter && string->characters[currentIndex] != '\0') 
+	int currentIndex = 0;
+	while(s->buffer[currentIndex] != delimiter && s->buffer[currentIndex] != '\0') 
 		currentIndex++;
-	if(currentIndex < string->length - 1){
+	if(currentIndex < s->length - 1){
 		if(currentIndex > token->length){
-			token->characters = realloc(token->characters, currentIndex + 1);
-			if(!token->characters) return 0;
+			token->buffer = realloc(token->buffer, currentIndex + 1);
+			if(!token->buffer) return RS_FAILURE;
 		}
 		//we don't need to reallocate if we want to shrink, just use the same buffer and terminate it with '\0'
 
-		size_t copyIndex = 0;
+		int copyIndex = 0;
 		while(copyIndex < currentIndex){
-			token->characters[copyIndex] = string->characters[copyIndex];
+			token->buffer[copyIndex] = s->buffer[copyIndex];
 			copyIndex++;
 		}
-		token->characters[currentIndex] = '\0';
+		token->buffer[currentIndex] = '\0';
 		token->length = currentIndex;
-		ExtractSubstring(string, currentIndex + 1, string->length - 1);
+		rs_extract(s, currentIndex + 1, s->length - 1);
 		return 1;
 	}
-	token->characters = NULL;
+	token->buffer = NULL;
 	token->length = 0;
-	return 0; //coudn't tokenize
+	return RS_FAILURE; //coudn't tokenize
 }
 
-int ReverseString(rstring* in_out_string){
-	if(!in_out_string) return 0;
-	if(in_out_string->length == 1 || in_out_string->length == 0) return 1;
+int rs_reverse(rs_string* s){
+	if(!s || !s->buffer) return RS_FAILURE;
+	if(s->length == 1 || s->length == 0) return RS_SUCCESS;
 
 	char aux = 0;
-	size_t startIndex = 0;
-	size_t endIndex = in_out_string->length - 1;
+	int startIndex = 0;
+	int endIndex = s->length - 1;
 
 	while(startIndex < endIndex){
-		aux = in_out_string->characters[startIndex];
-		in_out_string->characters[startIndex] = in_out_string->characters[endIndex];
-		in_out_string->characters[endIndex] = aux;
+		aux = s->buffer[startIndex];
+		s->buffer[startIndex] = s->buffer[endIndex];
+		s->buffer[endIndex] = aux;
 		startIndex++;
 		endIndex--;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int ConvertStringToInt(rstring* string, int* outputNumber){
-	if(!string || !outputNumber) return 0;
-	int r = sscanf(string->characters, "%i", outputNumber);
+int rs_convert_to_int(rs_string* s, int* n){
+	if(!s || !n || !s->buffer) return RS_FAILURE;
+	int r = sscanf(s->buffer, "%i", n);
 	if(r == -1 || r == 0){
 		//failure or couldn't convert any bytes
-		*outputNumber = 0;
-		return 0;
+		*n = 0;
+		return RS_FAILURE;
 	}
-	return 1;
+	return RS_SUCCESS;
 }
 
-int ConvertStringToFloat(rstring* string, float* outputNumber){
-	if(!string || !outputNumber) return 0;
-	int r = sscanf(string->characters, "%f", outputNumber);
+int rs_convert_to_float(rs_string* s, float* n){
+	if(!s || !n || !s->buffer) return RS_FAILURE;
+	int r = sscanf(s->buffer, "%f", n);
 	if(r == -1 || r == 0){
 		//failure
-		*outputNumber = 0.0f;
-		return 0;
+		*n = 0.0f;
+		return RS_FAILURE;
 	}
-	return 1;
+	return RS_SUCCESS;
+}
+
+void rs_print(rs_string* s){
+	if(s->buffer) printf(RS_STR_FMT"\n", RS_ARG(s));
 }
