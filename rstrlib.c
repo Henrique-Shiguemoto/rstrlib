@@ -1,9 +1,9 @@
 #include "rstrlib.h"
 
 int rs_length(const char* s){
-	int currentLength = 0;
-	while(*s++ && currentLength < RS_STRING_MAX_LENGTH) currentLength++;
-	return currentLength;
+	int current_length = 0;
+	while(*s++ && current_length < RS_STRING_MAX__length) current_length++;
+	return current_length;
 }
 
 rs_string rs_create(const char* s){
@@ -11,7 +11,7 @@ rs_string rs_create(const char* s){
 
 	rs_string newString = {0};
 	newString.length = rs_length(s);
-	if(newString.length == RS_STRING_MAX_LENGTH) return (rs_string){0};
+	if(newString.length == RS_STRING_MAX__length) return (rs_string){0};
 	
 	newString.buffer = malloc(sizeof(char) * newString.length + 1);
 
@@ -36,7 +36,7 @@ void rs_delete(rs_string* s){
 	if(!s) return;
 	if(s->buffer){
 		free(s->buffer);
-		s->buffer = NULL;
+		s->buffer = 0;
 		s->length = 0;
 	}
 }
@@ -44,9 +44,9 @@ void rs_delete(rs_string* s){
 /**
  * 
  * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
- * 		or it has to be NULL (like rs_string s = {0};, for example)
+ * 		or it has to be 0 (like rs_string s = {0};, for example)
  * 
- * If dest_s->buffer points to stack memory (unless it's just the value NULL), we'll have an undefined behavior from the free() function.
+ * If dest_s->buffer points to stack memory (unless it's just the value 0), we'll have an undefined behavior from the free() function.
  * 		(source: https://stackoverflow.com/questions/2693655/free-on-stack-memory)
  * 
  * */
@@ -72,9 +72,9 @@ int	rs_copy(rs_string* src_s, rs_string* dest_s){
 /**
  * 
  * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
- * 		or it has to be NULL (like rs_string s = {0};, for example)
+ * 		or it has to be 0 (like rs_string s = {0};, for example)
  * 
- * If dest_s->buffer points to stack memory (unless it's just the value NULL), we'll have an undefined behavior from the realloc() function.
+ * If dest_s->buffer points to stack memory (unless it's just the value 0), we'll have an undefined behavior from the realloc() function.
  * 		(source: https://linux.die.net/man/3/realloc)
  * 
  * */
@@ -177,14 +177,14 @@ int rs_compare_to_cstr_case_insensitive(rs_string* rs_str, char* cstr){
 int rs_extract(rs_string* s, int from, int to){
 	if(!s || !s->buffer || from > s->length || to > s->length || to < from) return RS_FAILURE;
 
-	int finalLength = to - from + 1;
+	int final_length = to - from + 1;
 	int currentIndex = 0;
-	while(currentIndex < finalLength){
+	while(currentIndex < final_length){
 		s->buffer[currentIndex] = s->buffer[currentIndex + from];
 		currentIndex++;
 	}
-	s->buffer[finalLength] = '\0';
-	s->length = finalLength;
+	s->buffer[final_length] = '\0';
+	s->length = final_length;
 	return RS_SUCCESS;
 }
 
@@ -299,7 +299,7 @@ int rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token){
 	int currentIndex = 0;
 	while(s->buffer[currentIndex] != delimiter && s->buffer[currentIndex] != '\0') 
 		currentIndex++;
-	if(currentIndex < s->length - 1){
+	if(currentIndex <= s->length - 1){
 		if(currentIndex > token->length){
 			token->buffer = realloc(token->buffer, currentIndex + 1);
 			if(!token->buffer) return RS_FAILURE;
@@ -313,10 +313,14 @@ int rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token){
 		}
 		token->buffer[currentIndex] = '\0';
 		token->length = currentIndex;
-		rs_extract(s, currentIndex + 1, s->length - 1);
+		int extraction_result = rs_extract_right(s, s->length - (currentIndex + 1));
+		if(extraction_result == RS_FAILURE){
+			s->buffer[0] = '\0';
+			s->length = 0;
+		}
 		return 1;
 	}
-	token->buffer = NULL;
+	token->buffer = 0;
 	token->length = 0;
 	return RS_FAILURE; //coudn't tokenize
 }
@@ -339,28 +343,25 @@ int rs_reverse(rs_string* s){
 	return RS_SUCCESS;
 }
 
-int rs_convert_to_int(rs_string* s, int* n){
-	if(!s || !n || !s->buffer) return RS_FAILURE;
-	int r = sscanf(s->buffer, "%i", n);
-	if(r == -1 || r == 0){
-		//failure or couldn't convert any bytes
-		*n = 0;
-		return RS_FAILURE;
-	}
-	return RS_SUCCESS;
-}
-
 int rs_convert_to_float(rs_string* s, float* n){
 	if(!s || !n || !s->buffer) return RS_FAILURE;
-	int r = sscanf(s->buffer, "%f", n);
-	if(r == -1 || r == 0){
-		//failure
-		*n = 0.0f;
-		return RS_FAILURE;
-	}
 	return RS_SUCCESS;
 }
 
-void rs_print(rs_string* s){
-	if(s->buffer) printf(RS_STR_FMT"\n", RS_ARG(s));
+int rs_convert_to_int(rs_string* s, int* n){
+	if(!s || !n || !s->buffer) return RS_FAILURE;
+	return RS_SUCCESS;
 }
+
+int rs_find_substring(rs_string* s, char* cstr){
+	return -1;
+}
+
+int rs_starts_with_substring(rs_string* s, char* cstr){
+	return RS_FAILURE;
+}
+
+int rs_end_with_substring(rs_string* s, char* cstr){
+	return RS_FAILURE;
+}
+

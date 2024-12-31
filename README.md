@@ -8,7 +8,7 @@ The <code>main.c</code> is just a test code showing how to use the library and t
 
 - String creation
 - String deletion
-- String length calculation
+- String _length calculation
 - String copying
 - String concatenation
 - Character search in String

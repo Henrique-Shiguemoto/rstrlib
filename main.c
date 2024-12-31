@@ -1,4 +1,7 @@
 #include "rstrlib.h"
+#include <stdio.h>
+
+#define RS_PRINT(s) do { if((s)->buffer) printf("%.*s\n", (int) (s)->length, (s)->buffer); } while(0)
 
 // This is just to show how to use the library functions
 
@@ -6,7 +9,7 @@ int main(void){
 	// Whenever you use rs_create() you need to call rs_delete later
 	printf("CREATING AND DELETING STRINGS:\n\n");
 	rs_string s0 = rs_create("Hello World\n");
-	rs_print(&s0);
+	RS_PRINT(&s0);
 	printf("length(s0): %d = %d\n", s0.length, rs_length(s0.buffer));
 	rs_delete(&s0);
 
@@ -15,8 +18,8 @@ int main(void){
 	rs_string s1 = rs_create("Test String");
 	rs_string s2 = rs_create(NULL); // same as (rs_string){0} or {0}
 	rs_copy(&s1, &s2);
-	rs_print(&s1);
-	rs_print(&s2);
+	RS_PRINT(&s1);
+	RS_PRINT(&s2);
 	rs_delete(&s1);
 	rs_delete(&s2);
 
@@ -24,8 +27,8 @@ int main(void){
 	rs_string s3 = rs_create("Hello ");
 	rs_string s4 = rs_create("World\n");
 	rs_concatenate(&s3, &s4);
-	rs_print(&s3);
-	rs_print(&s4);
+	RS_PRINT(&s3);
+	RS_PRINT(&s4);
 	rs_delete(&s3);
 	rs_delete(&s4);
 
@@ -54,13 +57,13 @@ int main(void){
 
 	printf("EXTRACTING SUBSTRINGS:\n\n");
 	rs_string s10 = rs_create("A brown fox jumps over the lazy dog");
-	rs_print(&s10);
+	RS_PRINT(&s10);
 	rs_extract(&s10, 7, 20);
-	rs_print(&s10);
+	RS_PRINT(&s10);
 	rs_extract_left(&s10, 8);
-	rs_print(&s10);
+	RS_PRINT(&s10);
 	rs_extract_right(&s10, 3);
-	rs_print(&s10);
+	RS_PRINT(&s10);
 	rs_delete(&s10);
 
 	printf("TRIMMING STRINGS:\n\n");
@@ -72,9 +75,9 @@ int main(void){
 	rs_trim_right(&s12);
 	rs_trim(&s13);
 	
-	rs_print(&s11);
-	rs_print(&s12);
-	rs_print(&s13);
+	RS_PRINT(&s11);
+	RS_PRINT(&s12);
+	RS_PRINT(&s13);
 
 	rs_delete(&s11);
 	rs_delete(&s12);
@@ -84,17 +87,17 @@ int main(void){
 	rs_string s14 = rs_create("High And Dry");
 	rs_string s15 = rs_create("314.567");
 
-	rs_print(&s14);
+	RS_PRINT(&s14);
 	rs_convert_upper(&s14);
-	rs_print(&s14);
+	RS_PRINT(&s14);
 	rs_convert_lower(&s14);
-	rs_print(&s14);
+	RS_PRINT(&s14);
 	
 	int a = 0;
 	float b = 0.0f;
 	rs_convert_to_int(&s15, &a);
 	rs_convert_to_float(&s15, &b);
-	rs_print(&s15);
+	RS_PRINT(&s15);
 	printf("a = %d\n", a);
 	printf("b = %f\n\n", b);
 
@@ -119,8 +122,8 @@ int main(void){
 	rs_string s17 = rs_create("#include <stdio.h>\nint main(void){\n\tprintf(\"Hello World...\");\n}\n");
 	rs_string token = rs_create(NULL);
 	while(rs_split_by_delimiter(&s17, '\n', &token)){
-		printf("rest = "); rs_print(&s17);
-		printf("token = "); rs_print(&token);
+		printf("rest = "); RS_PRINT(&s17);
+		printf("token = "); RS_PRINT(&token);
 		printf("-----------------------\n");
 	}
 	rs_delete(&s17);
@@ -128,9 +131,9 @@ int main(void){
 
 	printf("REVERSING STRINGS:\n\n");
 	rs_string s18 = rs_create("Hello World\n");
-	rs_print(&s18);
+	RS_PRINT(&s18);
 	rs_reverse(&s18);
-	rs_print(&s18);
+	RS_PRINT(&s18);
 	rs_delete(&s18);
 
 	return 0;
