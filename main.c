@@ -3,8 +3,6 @@
 
 #define RS_PRINT(s) do { if((s)->buffer) printf("%.*s\n", (int) (s)->length, (s)->buffer); } while(0)
 
-// This is just to show how to use the library functions
-
 int main(void){
 	// Whenever you use rs_create() you need to call rs_delete later
 	printf("CREATING AND DELETING STRINGS:\n\n");
@@ -135,6 +133,25 @@ int main(void){
 	rs_reverse(&s18);
 	RS_PRINT(&s18);
 	rs_delete(&s18);
+
+	printf("FINDING SUBSTRINGS:\n\n");
+
+	rs_string s19 = rs_create("A brown fox jumps over the lazy dog");
+	RS_PRINT(&s19);
+	printf("Result(\"fox\") = %i\n", rs_find_substring(&s19, "fox"));
+	printf("Result(\"lazy\") = %i\n", rs_find_substring(&s19, "lazy"));
+	printf("Result(\"dog\") = %i\n", rs_find_substring(&s19, "dog"));
+	printf("Result(\" \") = %i\n", rs_find_substring(&s19, " "));
+	printf("Result(\"A\") = %i\n", rs_find_substring(&s19, "A"));
+	printf("Result(\"Hello\") = %i\n", rs_find_substring(&s19, "Hello"));
+	printf("Result(\"World\") = %i\n", rs_find_substring(&s19, "World"));
+	printf("Result(\"A brown fox \") = %i\n", rs_starts_with_substring(&s19, "A brown fox "));
+	printf("Result(\"jumps over\") = %i\n", rs_starts_with_substring(&s19, "jumps over"));
+	printf("Result(\"A brown fox jumps over the lazy dog\") = %i\n", rs_starts_with_substring(&s19, "A brown fox jumps over the lazy dog"));
+	printf("Result(\"over the lazy dog\") = %i\n", rs_ends_with_substring(&s19, "over the lazy dog"));
+	printf("Result(\"brown fox jumps\") = %i\n", rs_ends_with_substring(&s19, "brown fox jumps"));
+	printf("Result(\"A brown fox jumps over the lazy dog\") = %i\n", rs_ends_with_substring(&s19, "A brown fox jumps over the lazy dog"));
+	rs_delete(&s19);
 
 	return 0;
 }

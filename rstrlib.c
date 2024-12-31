@@ -2,7 +2,7 @@
 
 int rs_length(const char* s){
 	int current_length = 0;
-	while(*s++ && current_length < RS_STRING_MAX__length) current_length++;
+	while(*s++ && current_length < RS_STRING_MAX_LENGTH) current_length++;
 	return current_length;
 }
 
@@ -25,13 +25,6 @@ rs_string rs_create(const char* s){
 	return newString;
 }
 
-
-/**
- * 
- * Since we're calling free, the user has to make sure that s->buffer is from the heap (by using rs_create or rs_copy).
- * 		(source: https://stackoverflow.com/questions/2693655/free-on-stack-memory)
- * 
- * */
 void rs_delete(rs_string* s){
 	if(!s) return;
 	if(s->buffer){
@@ -41,15 +34,6 @@ void rs_delete(rs_string* s){
 	}
 }
 
-/**
- * 
- * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
- * 		or it has to be 0 (like rs_string s = {0};, for example)
- * 
- * If dest_s->buffer points to stack memory (unless it's just the value 0), we'll have an undefined behavior from the free() function.
- * 		(source: https://stackoverflow.com/questions/2693655/free-on-stack-memory)
- * 
- * */
 int	rs_copy(rs_string* src_s, rs_string* dest_s){
 	if(!src_s || !dest_s || !src_s->buffer) return RS_FAILURE;
 
@@ -69,15 +53,6 @@ int	rs_copy(rs_string* src_s, rs_string* dest_s){
 	return RS_SUCCESS;
 }
 
-/**
- * 
- * There's danger in here! The user has to make sure that dest_s->buffer is either a heap allocated buffer (from rs_create for example) 
- * 		or it has to be 0 (like rs_string s = {0};, for example)
- * 
- * If dest_s->buffer points to stack memory (unless it's just the value 0), we'll have an undefined behavior from the realloc() function.
- * 		(source: https://linux.die.net/man/3/realloc)
- * 
- * */
 int rs_concatenate(rs_string* dest_s, rs_string* str_to_append){
 	if(!dest_s || !str_to_append){
 		return RS_FAILURE;
@@ -385,14 +360,63 @@ int rs_convert_to_int(rs_string* s, int* n){
 }
 
 int rs_find_substring(rs_string* s, char* cstr){
+	int substring_size = rs_length(cstr);
+	
+	if(!s || !cstr || !s->buffer || substring_size == 0) return -1;
+
+	for(int i = 0; i < s->length; i++){
+		// try to find the first character in the string
+		if(s->buffer[i] == cstr[0]){
+			// Once found, check if the next substring_size - 1 characters from cstr match
+			int result_index = i; // saving current i in case we found the substring, then we return the first character index
+			int j;
+			for (j = 1; j < substring_size; ++j) {
+				if(i + j >= s->length){
+					// In case we're out of bounds of the strings
+					// It means we didn't find the substring before
+					// 		so the substring isn't in the string
+					return -1;
+				} else if (s->buffer[i + j] == cstr[j]) {
+					// If the characters match, keep going to see if the other characters match too
+					continue;
+				} else {
+					// If the characters don't match, just break out of the loop and look for the next time the first character is found in the string
+					break;
+				}
+			}
+			if(j == substring_size){
+				return result_index;
+			}
+		}
+	}
 	return -1;
 }
 
 int rs_starts_with_substring(rs_string* s, char* cstr){
-	return RS_FAILURE;
+	int substring_size = rs_length(cstr);
+	
+	if(!s || !cstr || !s->buffer || substring_size == 0) return RS_FAILURE;
+
+	for (int i = 0; i < substring_size; ++i) {
+		if(s->buffer[i] != cstr[i]){
+			return RS_FAILURE;
+		}
+	}
+
+	return RS_SUCCESS;
 }
 
-int rs_end_with_substring(rs_string* s, char* cstr){
-	return RS_FAILURE;
+int rs_ends_with_substring(rs_string* s, char* cstr){
+	int substring_size = rs_length(cstr);
+	
+	if(!s || !cstr || !s->buffer || substring_size == 0) return RS_FAILURE;
+
+	for (int i = 0; i < substring_size; ++i) {
+		if(s->buffer[s->length - substring_size + i] != cstr[i]){
+			return RS_FAILURE;
+		}
+	}
+
+	return RS_SUCCESS;
 }
 

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#define RS_STRING_MAX__length 32000
+#define RS_STRING_MAX_LENGTH 64000
 
 #define RS_SUCCESS 1
 #define RS_FAILURE 0
@@ -44,6 +44,6 @@ int 	  	rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token);
 int 		rs_reverse(rs_string* s);
 int 		rs_find_substring(rs_string* s, char* cstr);
 int 		rs_starts_with_substring(rs_string* s, char* cstr);
-int 		rs_end_with_substring(rs_string* s, char* cstr);
+int 		rs_ends_with_substring(rs_string* s, char* cstr);
 
 #endif // RSTRLIB_H
