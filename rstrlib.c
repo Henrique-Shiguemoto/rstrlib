@@ -104,7 +104,7 @@ int rs_concatenate(rs_string* dest_s, rs_string* str_to_append){
 	return RS_SUCCESS;
 }
 
-int rs_first_occurrence(char c, rs_string* s){
+int rs_first_char_occurrence(char c, rs_string* s){
 	if(!s || !s->buffer || s->length == 0) return -1;
 
 	int currentIndex = 0;
@@ -116,7 +116,7 @@ int rs_first_occurrence(char c, rs_string* s){
 }
 
 int rs_is_char_in_string(char c, rs_string* s){
-	return rs_first_occurrence(c, s) == -1 ? RS_FAILURE : RS_SUCCESS;
+	return rs_first_char_occurrence(c, s) == -1 ? RS_FAILURE : RS_SUCCESS;
 }
 
 int rs_compare(rs_string* s1, rs_string* s2){
@@ -344,12 +344,43 @@ int rs_reverse(rs_string* s){
 }
 
 int rs_convert_to_float(rs_string* s, float* n){
-	if(!s || !n || !s->buffer) return RS_FAILURE;
+	if(!s || !n || !s->buffer || rs_count_letters(s) != 0) return RS_FAILURE;
+
+	*n = 0.0f;
+	int dot_index = rs_first_char_occurrence('.', s);
+
+	// convert integer part (0 to dot_index - 1)
+	for (int i = 0; i < dot_index; ++i) {
+		*n = *n * 10 + (float)(s->buffer[i] - '0');
+	}
+
+	// convert decimal part (dot_index + 1 to s->length - 1)
+	float decimal_power_of_10 = 10.0f;
+	for (int i = dot_index + 1; i < s->length; ++i) {
+		float digit = (float)(s->buffer[i] - '0');
+		*n += digit / decimal_power_of_10;
+		decimal_power_of_10 *= 10;
+	}
+
 	return RS_SUCCESS;
 }
 
 int rs_convert_to_int(rs_string* s, int* n){
-	if(!s || !n || !s->buffer) return RS_FAILURE;
+	if(!s || !n || !s->buffer || rs_count_letters(s) != 0) return RS_FAILURE;
+
+	*n = 0.0f;
+
+	int dot_index = rs_first_char_occurrence('.', s);
+	int index_limit = s->length;
+	if(dot_index != -1){
+		index_limit = dot_index;
+	}
+
+	// convert integer part
+	for (int i = 0; i < index_limit; ++i) {
+		*n = *n * 10 + (s->buffer[i] - '0');
+	}
+
 	return RS_SUCCESS;
 }
 

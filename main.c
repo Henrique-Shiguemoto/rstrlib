@@ -36,7 +36,7 @@ int main(void){
 	rs_string s5 = rs_create("Hello World\n");
 	char c0 = 'W';
 	printf("%c is%s in %s\n", c0, rs_is_char_in_string(c0, &s5) ? "" : "n't", s5.buffer);
-	printf("%c is at %d\n", c0, rs_first_occurrence(c0, &s5));
+	printf("%c is at %d\n", c0, rs_first_char_occurrence(c0, &s5));
 	rs_delete(&s5);
 
 	printf("COMPARING STRINGS:\n\n");

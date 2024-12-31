@@ -18,7 +18,7 @@ rs_string	rs_create(const char* s);
 void 		rs_delete(rs_string* s);
 int			rs_copy(rs_string* src_s, rs_string* dest_s);
 int 		rs_concatenate(rs_string* dest, rs_string* str_to_append);
-int 		rs_first_occurrence(char c, rs_string* s);
+int 		rs_first_char_occurrence(char c, rs_string* s);
 int         rs_is_char_in_string(char c, rs_string* s);
 int 		rs_compare(rs_string* s1, rs_string* s2);
 int         rs_compare_to_cstr(rs_string* rs_str, char* cstr);
