@@ -1,24 +1,23 @@
 # rstrlib
 
-This is just a simple string library for casual use. This is not recommended for low level development. 
+This is just a simple string library for casual use. This is not recommended for low level/performance dependent development. 
 
 The <code>main.c</code> is just a test code showing how to use the library and testing the functions.
 
 ## Features
 
-- String creation
-- String deletion
-- String _length calculation
+- String creation / setting / deletion
+- String length calculation
 - String copying
 - String concatenation
-- Character search in String
+- String searching
 - Substring extraction
+- String comparison
 - String trimming
-- String convertion to upper and lower case
-- String convertion (string to int, string to float) (maybe I'll get rid of this...I don't enjoy the stdio.h dependency)
-- Convenience function such as counting letters function, counting digits function, verifying if character is letter or digit
-- String reversing
-- String splitting by delimiter
+- String convertions
+- Convenience functions (see <code>main.c</code>)
+- String splitting by delimiter and substring
+- Delimiter and Substring replacement
   
 ## How to Use
 

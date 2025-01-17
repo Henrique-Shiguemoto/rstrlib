@@ -14,4 +14,4 @@ debug: all
 	$(DEBUGGER) $(BIN)
 
 clean:
-	del *.exe *.o *.ilk *.pdb
+	rm *.exe *.o *.ilk *.pdb

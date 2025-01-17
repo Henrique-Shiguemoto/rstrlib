@@ -11,7 +11,7 @@ rs_string rs_create(const char* s){
 
 	rs_string newString = {0};
 	newString.length = rs_length(s);
-	if(newString.length == RS_STRING_MAX__length) return (rs_string){0};
+	if(newString.length > RS_STRING_MAX_LENGTH) return (rs_string){0};
 	
 	newString.buffer = malloc(sizeof(char) * newString.length + 1);
 
@@ -57,7 +57,7 @@ int rs_concatenate(rs_string* dest_s, rs_string* str_to_append){
 	if(!dest_s || !str_to_append){
 		return RS_FAILURE;
 	}
-	if(!str_to_append->buffer){
+	if(!str_to_append->buffer || str_to_append->length == 0){
 		return RS_SUCCESS;
 	}
 	if(!dest_s->buffer){
@@ -79,7 +79,7 @@ int rs_concatenate(rs_string* dest_s, rs_string* str_to_append){
 	return RS_SUCCESS;
 }
 
-int rs_first_char_occurrence(char c, rs_string* s){
+int rs_first_char_occurrence(rs_string* s, char c){
 	if(!s || !s->buffer || s->length == 0) return -1;
 
 	int currentIndex = 0;
@@ -90,8 +90,8 @@ int rs_first_char_occurrence(char c, rs_string* s){
 	return -1;
 }
 
-int rs_is_char_in_string(char c, rs_string* s){
-	return rs_first_char_occurrence(c, s) == -1 ? RS_FAILURE : RS_SUCCESS;
+int rs_is_char_in_string(rs_string* s, char c){
+	return rs_first_char_occurrence(s, c) == -1 ? RS_FAILURE : RS_SUCCESS;
 }
 
 int rs_compare(rs_string* s1, rs_string* s2){
@@ -130,7 +130,7 @@ int rs_compare_case_insensitive(rs_string* s1, rs_string* s2){
 		currentIndex++;
 	}
 
-	return RS_FAILURE;
+	return RS_SUCCESS;
 }
 
 int rs_compare_to_cstr_case_insensitive(rs_string* rs_str, char* cstr){
@@ -150,7 +150,7 @@ int rs_compare_to_cstr_case_insensitive(rs_string* rs_str, char* cstr){
 }
 
 int rs_extract(rs_string* s, int from, int to){
-	if(!s || !s->buffer || from > s->length || to > s->length || to < from) return RS_FAILURE;
+	if(!s || !s->buffer || s->length == 0 || from >= s->length || to >= s->length || to < from || from < 0 || to < 0) return RS_FAILURE;
 
 	int final_length = to - from + 1;
 	int currentIndex = 0;
@@ -243,7 +243,7 @@ int rs_is_digit(char c){
 }
 
 int rs_count_letters(rs_string* s){
-	if(!s || !s->buffer) return 0;
+	if(!s || !s->buffer) return -1;
 	int count = 0;
 
 	int currentIndex = 0;
@@ -256,7 +256,7 @@ int rs_count_letters(rs_string* s){
 }
 
 int rs_count_digits(rs_string* s){
-	if(!s || !s->buffer) return 0;
+	if(!s || !s->buffer) return -1;
 	int count = 0;
 
 	int currentIndex = 0;
@@ -269,15 +269,16 @@ int rs_count_digits(rs_string* s){
 }
 
 int rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token){
-	if(!s || !s->buffer || !token) return RS_FAILURE;
+	if(!s || !s->buffer || !token || s->length == 0) return RS_FAILURE;
 
 	int currentIndex = 0;
 	while(s->buffer[currentIndex] != delimiter && s->buffer[currentIndex] != '\0') 
 		currentIndex++;
-	if(currentIndex <= s->length - 1){
-		if(currentIndex > token->length){
-			token->buffer = realloc(token->buffer, currentIndex + 1);
-			if(!token->buffer) return RS_FAILURE;
+	if(0 <= currentIndex && currentIndex <= s->length - 1){
+		if(currentIndex >= token->length){
+			char* temp = realloc(token->buffer, currentIndex + 1);
+			if(!temp) return RS_FAILURE;
+			token->buffer = temp;
 		}
 		//we don't need to reallocate if we want to shrink, just use the same buffer and terminate it with '\0'
 
@@ -293,16 +294,14 @@ int rs_split_by_delimiter(rs_string* s, char delimiter, rs_string* token){
 			s->buffer[0] = '\0';
 			s->length = 0;
 		}
-		return 1;
+		return RS_SUCCESS;
 	}
-	token->buffer = 0;
-	token->length = 0;
-	return RS_FAILURE; //coudn't tokenize
+	return RS_FAILURE;
 }
 
 int rs_reverse(rs_string* s){
 	if(!s || !s->buffer) return RS_FAILURE;
-	if(s->length == 1 || s->length == 0) return RS_SUCCESS;
+	if(s->length < 2) return RS_SUCCESS;
 
 	char aux = 0;
 	int startIndex = 0;
@@ -319,50 +318,89 @@ int rs_reverse(rs_string* s){
 }
 
 int rs_convert_to_float(rs_string* s, float* n){
-	if(!s || !n || !s->buffer || rs_count_letters(s) != 0) return RS_FAILURE;
+	if(!s || !n || !s->buffer || s->length == 0 || rs_count_letters(s) != 0) return RS_FAILURE;
 
-	*n = 0.0f;
-	int dot_index = rs_first_char_occurrence('.', s);
+	int sign = 1;
+	if(s->buffer[0] == '-'){
+		sign = -1;
+		rs_extract(s, 1, s->length - 1);
+	} else if(s->buffer[0] == '+') {
+		sign = 1;
+		rs_extract(s, 1, s->length - 1);
+	} else if(rs_is_digit(s->buffer[0])) {
+		sign = 1;
+	} else {
+		return RS_FAILURE;
+	}
 
+	int dot_index = rs_first_char_occurrence(s, '.');
+
+	float result = 0.0f;
+	int index_limit = (dot_index < 0) ? s->length : dot_index;
+	
 	// convert integer part (0 to dot_index - 1)
-	for (int i = 0; i < dot_index; ++i) {
-		*n = *n * 10 + (float)(s->buffer[i] - '0');
+	for (int i = 0; i < index_limit; ++i) {
+		if (rs_is_digit(s->buffer[i])) {
+			result = result * 10 + (float)(s->buffer[i] - '0');
+		} else {
+			return RS_FAILURE;
+		}
 	}
 
 	// convert decimal part (dot_index + 1 to s->length - 1)
 	float decimal_power_of_10 = 10.0f;
-	for (int i = dot_index + 1; i < s->length; ++i) {
-		float digit = (float)(s->buffer[i] - '0');
-		*n += digit / decimal_power_of_10;
-		decimal_power_of_10 *= 10;
+	for (int i = index_limit + 1; i < s->length; ++i) {
+		if (rs_is_digit(s->buffer[i])) {
+			float digit = (float)(s->buffer[i] - '0');
+			result += digit / decimal_power_of_10;
+			decimal_power_of_10 *= 10;
+		} else {
+			return RS_FAILURE;
+		}
 	}
+
+	*n = result * sign;
 
 	return RS_SUCCESS;
 }
 
 int rs_convert_to_int(rs_string* s, int* n){
-	if(!s || !n || !s->buffer || rs_count_letters(s) != 0) return RS_FAILURE;
+	if(!s || !n || !s->buffer || s->length == 0 || rs_count_letters(s) != 0) return RS_FAILURE;
 
-	*n = 0.0f;
-
-	int dot_index = rs_first_char_occurrence('.', s);
-	int index_limit = s->length;
-	if(dot_index != -1){
-		index_limit = dot_index;
+	int sign = 1;
+	if(s->buffer[0] == '-'){
+		sign = -1;
+		rs_extract(s, 1, s->length - 1);
+	} else if(s->buffer[0] == '+') {
+		sign = 1;
+		rs_extract(s, 1, s->length - 1);
+	} else if(rs_is_digit(s->buffer[0])) {
+		sign = 1;
+	} else {
+		return RS_FAILURE;
 	}
+
+	int dot_index = rs_first_char_occurrence(s, '.');
+	int index_limit = (dot_index < 0) ? s->length : dot_index;
 
 	// convert integer part
+	int result = 0;
 	for (int i = 0; i < index_limit; ++i) {
-		*n = *n * 10 + (s->buffer[i] - '0');
+		if(rs_is_digit(s->buffer[i])){
+			result = result * 10 + (s->buffer[i] - '0');	
+		} else {
+			return RS_FAILURE;
+		}
 	}
 
+	*n = result * sign;
 	return RS_SUCCESS;
 }
 
-int rs_find_substring(rs_string* s, char* cstr){
+int rs_first_substring_ocurrence(rs_string* s, const char* cstr){
 	int substring_size = rs_length(cstr);
 	
-	if(!s || !cstr || !s->buffer || substring_size == 0) return -1;
+	if(!s || !cstr || !s->buffer || s->length == 0 || substring_size == 0) return -1;
 
 	for(int i = 0; i < s->length; i++){
 		// try to find the first character in the string
@@ -420,3 +458,281 @@ int rs_ends_with_substring(rs_string* s, char* cstr){
 	return RS_SUCCESS;
 }
 
+int rs_trim_delimiter(rs_string* s, char delimiter) {
+	if(!s || !s->buffer) return RS_FAILURE;
+
+	int startIndex = 0;
+	int endIndex = s->length - 1;
+	while(s->buffer[startIndex] == delimiter || s->buffer[endIndex] == delimiter){
+		if(s->buffer[startIndex] == delimiter) startIndex++;
+		if(s->buffer[endIndex] 	 == delimiter) endIndex--;
+	}
+
+	rs_extract(s, startIndex, endIndex);
+	return RS_SUCCESS;
+}
+
+// This assumes that dest is valid of course, you'll need enough memory before hand
+int rs_copy_to_cstr(rs_string* src_s, char* dest, int dest_length) {
+	if(!src_s || !dest || !src_s->buffer || dest_length < src_s->length) return RS_FAILURE;
+
+	int i = 0;
+	int min_length = (src_s->length < dest_length) ? src_s->length : dest_length;
+	while(i < min_length){
+		dest[i] = src_s->buffer[i];
+		i++;
+	}
+	dest[i] = '\0';
+
+	return RS_SUCCESS;	
+}
+
+int rs_replace_character(rs_string* s, const char char_to_replace, const char replacement) {
+	if(!s || !s->buffer) return RS_FAILURE;
+
+	for(int i = 0; i < s->length; i++){
+		if(s->buffer[i] == char_to_replace){
+			s->buffer[i] = replacement;
+		}
+	}
+
+	return RS_SUCCESS;
+}
+
+int rs_replace_substring(rs_string* s, const char* substring_to_replace, const char* substring_replacement) {
+	int substring_to_replace_size = rs_length(substring_to_replace);
+	int substring_replacement_size = rs_length(substring_replacement);
+	int substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
+	if(!s || !s->buffer || !substring_to_replace_size || !substring_replacement || substring_to_replace_index < 0) return RS_FAILURE;
+
+	int size_diff = substring_to_replace_size - substring_replacement_size;
+
+	if(size_diff == 0){
+		do {
+			int i = substring_to_replace_index;
+
+			for (int _i = 0; _i < substring_replacement_size; ++_i) {
+				s->buffer[i + _i] = substring_replacement[_i];
+			}
+
+			substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
+		} while (substring_to_replace_index >= 0);
+	} else if(size_diff > 0){
+		// The substring inside rstring is bigger than the replacement
+		// Example: string = "Hello World", to_replace = "Hello W", replacement = "To", to_replace is bigger than replacement
+		do {
+			int i = substring_to_replace_index;
+
+			for (int _i = 0; _i < substring_replacement_size; ++_i) {
+				s->buffer[i + _i] = substring_replacement[_i];
+			}
+
+			// Here we still have size_diff characters from the old substring, we need to copy characters over to fill this occupied space
+			for (int _i = 0; _i < s->length - substring_to_replace_size; ++_i) {
+				s->buffer[substring_replacement_size + _i] = s->buffer[substring_replacement_size + size_diff + _i];
+			}
+			s->length -= size_diff;
+
+			substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
+		} while (substring_to_replace_index >= 0);
+	} else {
+		return RS_FAILURE;
+		// The substring inside rstring is smaller than the replacement
+		// Example: string = "Hello World", to_replace = "Hello", replacement = "Hello123", to_replace is smaller than replacement
+		
+		char buffer[RS_STRING_MAX_LENGTH] = {0};
+		int old_size = s->length;
+
+		int substring_count = rs_count_substring(s, substring_to_replace);
+		int new_memory_estimate = substring_count * (size_diff) + old_size;
+		if(new_memory_estimate > RS_STRING_MAX_LENGTH){
+			return RS_FAILURE;
+		}
+
+		char* temp = realloc(s->buffer, new_memory_estimate);
+		if(!temp) return RS_FAILURE;
+		s->buffer = temp;
+		s->length = new_memory_estimate;
+
+		int original_string_iterator = 0;
+		int new_buffer_iterator = 0;
+		do {
+			int i = substring_to_replace_index;
+			
+			while(original_string_iterator != i){
+				buffer[new_buffer_iterator] = s->buffer[original_string_iterator];
+				original_string_iterator++;
+				new_buffer_iterator++;
+			}
+			s->buffer[i] += 1; // So that rs_first_substring_ocurrence finds the next substring
+			int substring_replacement_iterator = 0;
+			while(substring_replacement_iterator < substring_to_replace_size){
+				buffer[new_buffer_iterator + substring_replacement_iterator] = substring_replacement[substring_replacement_iterator];
+				substring_replacement_iterator++;
+				new_buffer_iterator++;
+			}
+			original_string_iterator += substring_to_replace_size;
+
+			substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
+		} while(substring_to_replace_index >= 0);
+
+		rs_set(s, buffer);
+	}
+	return RS_SUCCESS;
+}
+
+int rs_split_by_substring(rs_string* s, char* substring_delimiter, rs_string* token) {
+	if(!s || !s->buffer || !substring_delimiter || !token || s->length == 0) return RS_FAILURE;
+
+	int substring_size = rs_length(substring_delimiter);
+	int currentIndex = rs_first_substring_ocurrence(s, substring_delimiter);
+	if(0 <= currentIndex && currentIndex <= s->length - 1){
+		//we don't need to reallocate if we want to shrink, just use the same buffer and terminate it with '\0'
+		if(currentIndex >= token->length){
+			char* temp = realloc(token->buffer, currentIndex + 1);
+			if(!temp) return RS_FAILURE;
+			token->buffer = temp;
+		}
+
+		if(currentIndex == 0){
+			// Case where the delimiter is already encountered in the first index
+			token->length = 0;
+			token->buffer[0] = '\0';
+
+			int extraction_result = rs_extract_right(s, s->length - substring_size);
+			if(extraction_result == RS_FAILURE){
+				s->buffer[0] = '\0';
+				s->length = 0;
+			}
+		} else {
+			int copyIndex = 0;
+			while(copyIndex < currentIndex){
+				token->buffer[copyIndex] = s->buffer[copyIndex];
+				copyIndex++;
+			}
+			token->buffer[currentIndex] = '\0';
+			token->length = currentIndex;
+			int extraction_result = rs_extract_right(s, s->length - currentIndex - substring_size);
+			if(extraction_result == RS_FAILURE){
+				s->buffer[0] = '\0';
+				s->length = 0;
+			}
+		}
+		return RS_SUCCESS;
+	}
+	return RS_FAILURE; //coudn't tokenize
+}
+
+int rs_remove_delimiter(rs_string* s, char delimiter) {
+	if(!s || !s->buffer) return RS_FAILURE;
+	
+	char buffer[RS_STRING_MAX_LENGTH] = {0};
+
+	int i = 0;
+	int j = 0;
+	while(i < s->length){
+		if(s->buffer[i] != delimiter){
+			buffer[j] = s->buffer[i];
+			j++;
+		}
+		i++;
+	}
+
+	if(!rs_set(s, buffer)) return RS_FAILURE;
+	
+	return RS_SUCCESS;
+}
+
+int rs_count_character(rs_string* s, const char character) {
+	if(!s || !s->buffer) return 0;
+
+	int result = 0;
+	for (int i = 0; i < s->length; ++i){
+		if (s->buffer[i] == character){
+			result++;
+		}
+	}
+
+	return result;
+}
+
+int rs_count_substring(rs_string* s, const char* substring) {
+	int substring_length = rs_length(substring);
+	if(!s || !s->buffer || !substring || substring_length == 0) return 0;
+
+	rs_string temp = rs_create(NULL);
+	if(!rs_copy(s, &temp)) return -1;
+
+	int substring_count = 0;
+	int substring_index = rs_first_substring_ocurrence(&temp, substring);
+	while(substring_index != -1){
+		substring_count++;
+		// Just incrementing the character value so the next rs_first_substring_ocurrence 
+		// 		looks for a different place in the rstring to find the substring
+		// If we didn't do this, rs_first_substring_ocurrence would return the same index everytime
+		int _j = 0;
+		while(_j < substring_length){
+			temp.buffer[substring_index + _j] = temp.buffer[substring_index + _j] + 1;
+			_j++;
+		}
+		substring_index = rs_first_substring_ocurrence(&temp, substring);
+	}
+
+	rs_delete(&temp);
+	return substring_count;
+}
+
+int rs_set(rs_string* s, const char* string){
+	int string_length = rs_length(string);
+	if(!s || !s->buffer) return RS_FAILURE;
+	if(string_length == 0){
+		s->buffer[0] = '\0';
+		s->length = 0;
+	}
+
+	if(s->length < string_length) {
+		char* temp = (char*)realloc(s->buffer, string_length + 1);
+		if(!temp) return RS_FAILURE;
+		s->buffer = temp;
+	}
+
+	int i = 0;
+	while(i < string_length){
+		s->buffer[i] = string[i];
+		i++;
+	}
+	s->buffer[i] = '\0';
+	s->length = string_length;
+	return RS_SUCCESS;
+}
+
+int rs_convert_hex_to_uint(rs_string* s, unsigned int* n) {
+	if(!s || !n || !s->buffer || (!rs_starts_with_substring(s, "0x") && !rs_starts_with_substring(s, "0X"))) return RS_FAILURE;
+
+	rs_extract(s, 2, s->length - 1);
+	if(s->length > 8){ return RS_FAILURE; }
+	
+	// every character represents a nibble
+	unsigned int base_2_multiplier = 1;
+	int i = s->length - 1;
+	unsigned int result = 0;
+	while(i >= 0){
+		if(!(rs_is_digit(s->buffer[i]) || ('a' <= s->buffer[i] && s->buffer[i] <= 'f') || ('A' <= s->buffer[i] && s->buffer[i] <= 'F'))){
+			return RS_FAILURE;
+		}
+
+		if(rs_is_digit(s->buffer[i])){
+			result += base_2_multiplier * (unsigned int)(s->buffer[i] - '0');
+		} else if (rs_is_upper(s->buffer[i])) {
+			result += base_2_multiplier * (unsigned int)(s->buffer[i] - 'A' + 10); // need to add 10 since it's in hex
+		} else {
+			result += base_2_multiplier * (unsigned int)(s->buffer[i] - 'a' + 10); // need to add 10 since it's in hex
+		}
+		
+		base_2_multiplier <<= 4;
+		i--;
+	}
+	*n = result;
+
+	return RS_SUCCESS;
+}
