@@ -13,7 +13,6 @@ typedef struct rs_string{
 	char* buffer;
 } rs_string;
 
-// TODO(Rick): Document these rstrlib functions please.
 int rs_length(const char* s);
 rs_string rs_create(const char* s);
 void rs_delete(rs_string* s);
