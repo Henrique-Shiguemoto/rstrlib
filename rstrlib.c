@@ -1,6 +1,8 @@
 #include "rstrlib.h"
 
 int rs_length(const char* s){
+	if(!s) return -1;
+	
 	int current_length = 0;
 	while(*s++ && current_length < RS_STRING_MAX_LENGTH) current_length++;
 	return current_length;
@@ -433,7 +435,7 @@ int rs_first_substring_ocurrence(rs_string* s, const char* cstr){
 int rs_starts_with_substring(rs_string* s, char* cstr){
 	int substring_size = rs_length(cstr);
 	
-	if(!s || !cstr || !s->buffer || substring_size == 0) return RS_FAILURE;
+	if(!s || !cstr || !s->buffer) return RS_FAILURE;
 
 	for (int i = 0; i < substring_size; ++i) {
 		if(s->buffer[i] != cstr[i]){
@@ -447,7 +449,7 @@ int rs_starts_with_substring(rs_string* s, char* cstr){
 int rs_ends_with_substring(rs_string* s, char* cstr){
 	int substring_size = rs_length(cstr);
 	
-	if(!s || !cstr || !s->buffer || substring_size == 0) return RS_FAILURE;
+	if(!s || !cstr || !s->buffer) return RS_FAILURE;
 
 	for (int i = 0; i < substring_size; ++i) {
 		if(s->buffer[s->length - substring_size + i] != cstr[i]){
@@ -488,7 +490,7 @@ int rs_copy_to_cstr(rs_string* src_s, char* dest, int dest_length) {
 }
 
 int rs_replace_character(rs_string* s, const char char_to_replace, const char replacement) {
-	if(!s || !s->buffer) return RS_FAILURE;
+	if(!s || !s->buffer || s->length == 0) return RS_FAILURE;
 
 	for(int i = 0; i < s->length; i++){
 		if(s->buffer[i] == char_to_replace){
@@ -503,7 +505,7 @@ int rs_replace_substring(rs_string* s, const char* substring_to_replace, const c
 	int substring_to_replace_size = rs_length(substring_to_replace);
 	int substring_replacement_size = rs_length(substring_replacement);
 	int substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
-	if(!s || !s->buffer || !substring_to_replace_size || !substring_replacement || substring_to_replace_index < 0) return RS_FAILURE;
+	if(!s || !s->buffer || !substring_to_replace || !substring_replacement || substring_to_replace_size < 0 || substring_to_replace_index < 0 || s->length == 0) return RS_FAILURE;
 
 	int size_diff = substring_to_replace_size - substring_replacement_size;
 
@@ -523,20 +525,21 @@ int rs_replace_substring(rs_string* s, const char* substring_to_replace, const c
 		do {
 			int i = substring_to_replace_index;
 
-			for (int _i = 0; _i < substring_replacement_size; ++_i) {
+			// Copying the replacement substring at the position of the substring to replace
+			for (int _i = 0; _i < substring_replacement_size; ++_i){
 				s->buffer[i + _i] = substring_replacement[_i];
 			}
 
-			// Here we still have size_diff characters from the old substring, we need to copy characters over to fill this occupied space
-			for (int _i = 0; _i < s->length - substring_to_replace_size; ++_i) {
-				s->buffer[substring_replacement_size + _i] = s->buffer[substring_replacement_size + size_diff + _i];
+			// Shifting all the characters from the right to the left a bit
+			for (int _i = 0; _i < s->length - (i + substring_to_replace_size); ++_i){
+				s->buffer[i + substring_replacement_size + _i] = s->buffer[i + substring_to_replace_size + _i];
 			}
 			s->length -= size_diff;
 
 			substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
 		} while (substring_to_replace_index >= 0);
+		s->buffer[s->length] = '\0';
 	} else {
-		return RS_FAILURE;
 		// The substring inside rstring is smaller than the replacement
 		// Example: string = "Hello World", to_replace = "Hello", replacement = "Hello123", to_replace is smaller than replacement
 		
@@ -544,12 +547,12 @@ int rs_replace_substring(rs_string* s, const char* substring_to_replace, const c
 		int old_size = s->length;
 
 		int substring_count = rs_count_substring(s, substring_to_replace);
-		int new_memory_estimate = substring_count * (size_diff) + old_size;
+		int new_memory_estimate = substring_count * (-size_diff) + old_size; // size_diff here is negative
 		if(new_memory_estimate > RS_STRING_MAX_LENGTH){
 			return RS_FAILURE;
 		}
 
-		char* temp = realloc(s->buffer, new_memory_estimate);
+		char* temp = realloc(s->buffer, new_memory_estimate + 1);
 		if(!temp) return RS_FAILURE;
 		s->buffer = temp;
 		s->length = new_memory_estimate;
@@ -559,15 +562,25 @@ int rs_replace_substring(rs_string* s, const char* substring_to_replace, const c
 		do {
 			int i = substring_to_replace_index;
 			
+			// copying the contents from before the string_to_replace to the buffer variable
 			while(original_string_iterator != i){
 				buffer[new_buffer_iterator] = s->buffer[original_string_iterator];
 				original_string_iterator++;
 				new_buffer_iterator++;
 			}
-			s->buffer[i] += 1; // So that rs_first_substring_ocurrence finds the next substring
+
+			// just changing the substring in a way that rs_first_substring_ocurrence() finds the next 
+			int _j = 0;
+			while(_j < substring_to_replace_size){
+				s->buffer[i + _j] = s->buffer[i + _j] + 1;
+				_j++;
+			}
+
+			// Writing the replacement_string at the correct place in the buffer variable
 			int substring_replacement_iterator = 0;
-			while(substring_replacement_iterator < substring_to_replace_size){
-				buffer[new_buffer_iterator + substring_replacement_iterator] = substring_replacement[substring_replacement_iterator];
+			int last_new_buffer_iterator_index = new_buffer_iterator;
+			while(substring_replacement_iterator < substring_replacement_size){
+				buffer[last_new_buffer_iterator_index + substring_replacement_iterator] = substring_replacement[substring_replacement_iterator];
 				substring_replacement_iterator++;
 				new_buffer_iterator++;
 			}
@@ -575,6 +588,13 @@ int rs_replace_substring(rs_string* s, const char* substring_to_replace, const c
 
 			substring_to_replace_index = rs_first_substring_ocurrence(s, substring_to_replace);
 		} while(substring_to_replace_index >= 0);
+
+		int _i = 0;
+		int characters_remaining_count = old_size - original_string_iterator;
+		while(_i < characters_remaining_count){
+			buffer[new_buffer_iterator + _i] = s->buffer[original_string_iterator + _i];
+			_i++;
+		}
 
 		rs_set(s, buffer);
 	}

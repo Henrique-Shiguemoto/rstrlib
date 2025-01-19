@@ -222,10 +222,6 @@ int main(void){
 	printf("\nTest EXTRACTING SUBSTRINGS...\n");
 	{
 		rs_string s0 = rs_create("A brown fox jumps over the lazy dog");
-		rs_string s1 = rs_create("111222333");
-		rs_string s2 = rs_create("");
-		rs_string s3 = rs_create(NULL);
-		rs_string s4 = rs_create("Hello World\n");
 		RS_ASSERT(rs_extract(&s0, 0, 15) == RS_SUCCESS); // Index 15 is included in the result
 		RS_ASSERT(s0.length == 16);
 		RS_ASSERT(memcmp(s0.buffer, "A brown fox jump", s0.length) == 0);
@@ -233,6 +229,7 @@ int main(void){
 		RS_ASSERT(s0.length == 6);
 		RS_ASSERT(memcmp(s0.buffer, "wn fox", s0.length) == 0);
 
+		rs_string s1 = rs_create("111222333");
 		RS_ASSERT(rs_extract_left(&s1, 7) == RS_SUCCESS);
 		RS_ASSERT(s1.length == 7);
 		RS_ASSERT(memcmp(s1.buffer, "1112223", s1.length) == 0);
@@ -243,8 +240,13 @@ int main(void){
 		RS_ASSERT(s1.length == 2);
 		RS_ASSERT(memcmp(s1.buffer, "13", s1.length) == 0);
 
+		rs_string s2 = rs_create("");
 		RS_ASSERT(rs_extract(&s2, 0, 1) == RS_FAILURE); // If buffer is empty, then it fails
+		
+		rs_string s3 = rs_create(NULL);
 		RS_ASSERT(rs_extract(&s3, 0, 1) == RS_FAILURE); // If buffer is NULL, then it fails
+		
+		rs_string s4 = rs_create("Hello World\n");
 		RS_ASSERT(rs_extract(&s4, 0, 256) == RS_FAILURE); // If either integer parameter falls outside the bound of the string, it fails
 
 		rs_delete(&s0);
@@ -258,31 +260,31 @@ int main(void){
 	printf("\nTest TRIMMING STRINGS...\n");
 	{
 		rs_string s0 = rs_create("       A Little from Column A    ");
-		rs_string s1 = rs_create("  a Little from Column B    ");
-		rs_string s2 = rs_create(" a Little from Column C          ");
-		rs_string s3 = rs_create("******a******");
-		rs_string s4 = rs_create(NULL);
-		
 		RS_ASSERT(rs_trim(&s0) == RS_SUCCESS);
 		RS_ASSERT(s0.length == 22);
 		RS_ASSERT(memcmp(s0.buffer, "A Little from Column A", s0.length) == 0);
 		
+		rs_string s1 = rs_create("  a Little from Column B    ");
 		RS_ASSERT(rs_trim_left(&s1) == RS_SUCCESS);
 		RS_ASSERT(s1.length == 26);
 		RS_ASSERT(memcmp(s1.buffer, "a Little from Column B    ", s1.length) == 0);
 		
+		rs_string s2 = rs_create(" a Little from Column C          ");
 		RS_ASSERT(rs_trim_right(&s2) == RS_SUCCESS);
 		RS_ASSERT(s2.length == 23);
 		RS_ASSERT(memcmp(s2.buffer, " a Little from Column C", s2.length) == 0);
 		
+		rs_string s3 = rs_create("******a******");
 		RS_ASSERT(rs_trim_delimiter(&s3, '*') == RS_SUCCESS);
 		RS_ASSERT(s3.length == 1);
 		RS_ASSERT(memcmp(s3.buffer, "a", s3.length) == 0);
 		
+		rs_string s4 = rs_create(NULL);
 		RS_ASSERT(rs_trim(&s4) == RS_FAILURE); // if character buffer is NULL, all functions fails
 		RS_ASSERT(rs_trim_left(&s4) == RS_FAILURE);
 		RS_ASSERT(rs_trim_right(&s4) == RS_FAILURE);
 		RS_ASSERT(rs_trim_delimiter(&s4, ' ') == RS_FAILURE);
+		
 		RS_ASSERT(rs_trim(NULL) == RS_FAILURE); // if the parameter is NULL, all functions fails
 		RS_ASSERT(rs_trim_left(NULL) == RS_FAILURE);
 		RS_ASSERT(rs_trim_right(NULL) == RS_FAILURE);
@@ -298,13 +300,14 @@ int main(void){
 	printf("\nTest CONVERTING STRINGS...\n");
 	{
 		rs_string s0 = rs_create("High And Dry");
-		rs_string s1 = rs_create(NULL);
 		RS_ASSERT(rs_convert_upper(&s0) == RS_SUCCESS);
 		RS_ASSERT(s0.length == 12);
 		RS_ASSERT(memcmp(s0.buffer, "HIGH AND DRY", s0.length) == 0);
 		RS_ASSERT(rs_convert_lower(&s0) == RS_SUCCESS);
 		RS_ASSERT(s0.length == 12);
 		RS_ASSERT(memcmp(s0.buffer, "high and dry", s0.length) == 0);
+		
+		rs_string s1 = rs_create(NULL);
 		RS_ASSERT(rs_convert_upper(&s1) == RS_FAILURE); // If parameter has a NULL buffer or is NULL itself, these functions fails
 		RS_ASSERT(s1.length == 0);
 		RS_ASSERT(s1.buffer == NULL);
@@ -313,129 +316,163 @@ int main(void){
 		RS_ASSERT(s1.length == 0);
 		RS_ASSERT(s1.buffer == NULL);
 		RS_ASSERT(memcmp(s1.buffer, "", s1.length) == 0);
+		
 		RS_ASSERT(rs_convert_upper(NULL) == RS_FAILURE);
 		RS_ASSERT(rs_convert_lower(NULL) == RS_FAILURE);
 		
-		rs_string s2 = rs_create("314.567");
-		rs_string s3 = rs_create("Not a valid float");
-		rs_string s4 = rs_create("10");
-		rs_string s5 = rs_create("0.567764");
-		rs_string s6 = rs_create("100000000000.567764999999");
-		rs_string s7 = rs_create("0.0f");
-		rs_string s8 = rs_create("+100.56");
-		rs_string s9 = rs_create("-12.3");
-		rs_string s10 = rs_create(NULL);
-		rs_string s11 = rs_create("");
-		rs_string s12 = rs_create("23.4-5/6");
 
 		float b = 0.0f;
+		rs_string s2 = rs_create("314.567");
 		RS_ASSERT(rs_convert_to_float(&s2, &b) == RS_SUCCESS);
 		RS_ASSERT(b == 314.567f);
+		
+		rs_string s3 = rs_create("Not a valid float");
 		RS_ASSERT(rs_convert_to_float(&s3, &b) == RS_FAILURE);
 		RS_ASSERT(b == 314.567f); // b is untouched when the function fails
+		
+		rs_string s4 = rs_create("10");
 		RS_ASSERT(rs_convert_to_float(&s4, &b) == RS_SUCCESS);
 		RS_ASSERT(b == 10.0f); // works with string formatted as integers too
+		
+		rs_string s5 = rs_create("0.567764");
 		RS_ASSERT(rs_convert_to_float(&s5, &b) == RS_SUCCESS);
 		RS_ASSERT(-0.0000001 < (b - 0.567764f) && (b - 0.567764f) < 0.0000001); // better precision with numbers closer to 0.0f
+		
+		rs_string s6 = rs_create("100000000000.567764999999");
 		RS_ASSERT(rs_convert_to_float(&s6, &b) == RS_SUCCESS); // this is a huge number for conversions, which obviously will give you meaningless numbers, but I want to leave this test here to show that this isn't an error per se
+		
 		b = 0.0f;
+		rs_string s7 = rs_create("0.0f");
 		RS_ASSERT(rs_convert_to_float(&s7, &b) == RS_FAILURE); // cannot have characters in the number, even if it's an 'f' character at the end
 		RS_ASSERT(b == 0.0f);
+		
+		rs_string s8 = rs_create("+100.56");
 		RS_ASSERT(rs_convert_to_float(&s8, &b) == RS_SUCCESS);
 		RS_ASSERT(b == 100.56f);
+		
+		rs_string s9 = rs_create("-12.3");
 		RS_ASSERT(rs_convert_to_float(&s9, &b) == RS_SUCCESS);
 		RS_ASSERT(b == -12.3f);
+		
+		rs_string s10 = rs_create(NULL);
 		RS_ASSERT(rs_convert_to_float(&s10, &b) == RS_FAILURE); // if buffer is null, it fails
 		RS_ASSERT(b == -12.3f);
+		
 		RS_ASSERT(rs_convert_to_float(NULL, &b) == RS_FAILURE); // if parameter is NULL it fails
 		RS_ASSERT(b == -12.3f);
+		
+		rs_string s11 = rs_create("");
 		RS_ASSERT(rs_convert_to_float(&s11, &b) == RS_FAILURE); // if length is 0, it fails
 		RS_ASSERT(b == -12.3f);
+		
+		rs_string s12 = rs_create("23.4-5/6");
 		RS_ASSERT(rs_convert_to_float(&s12, &b) == RS_FAILURE);
 		RS_ASSERT(b == -12.3f);
 		
-		rs_string s13 = rs_create("100");
-		rs_string s14 = rs_create("0.345");
-		rs_string s15 = rs_create("Not a valid integer");
-		rs_string s16 = rs_create("9999999L");
-		rs_string s17 = rs_create("+2147483647");
-		rs_string s18 = rs_create("-2147483648");
-		rs_string s19 = rs_create("23.5647");
-		rs_string s20 = rs_create("+2323+2323");
-		rs_string s21 = rs_create("-2323-2323");
-		rs_string s22 = rs_create(".");
-		rs_string s23 = rs_create("");
-		rs_string s24 = rs_create(NULL);
 		int a = 0;
+		rs_string s13 = rs_create("100");
 		RS_ASSERT(rs_convert_to_int(&s13, &a) == RS_SUCCESS);
 		RS_ASSERT(a == 100);
+		
+		rs_string s14 = rs_create("0.345");
 		RS_ASSERT(rs_convert_to_int(&s14, &a) == RS_SUCCESS);
 		RS_ASSERT(a == 0);
+		
+		rs_string s15 = rs_create("Not a valid integer");
 		RS_ASSERT(rs_convert_to_int(&s15, &a) == RS_FAILURE); // a is untouched when the function fails
 		RS_ASSERT(a == 0);
+		
+		rs_string s16 = rs_create("9999999L");
 		RS_ASSERT(rs_convert_to_int(&s16, &a) == RS_FAILURE); // can't have a character in the string. even if it's the 'L' character
 		RS_ASSERT(a == 0);
+		
+		rs_string s17 = rs_create("+2147483647");
 		RS_ASSERT(rs_convert_to_int(&s17, &a) == RS_SUCCESS);
 		RS_ASSERT(a == 2147483647);
+		
+		rs_string s18 = rs_create("-2147483648");
 		RS_ASSERT(rs_convert_to_int(&s18, &a) == RS_SUCCESS);
 		RS_ASSERT(a == -2147483648);
+		
+		rs_string s19 = rs_create("23.5647");
 		RS_ASSERT(rs_convert_to_int(&s19, &a) == RS_SUCCESS);
 		RS_ASSERT(a == 23);
+		
+		rs_string s20 = rs_create("+2323+2323");
 		RS_ASSERT(rs_convert_to_int(&s20, &a) == RS_FAILURE);
 		RS_ASSERT(a == 23);
+		
+		rs_string s21 = rs_create("-2323-2323");
 		RS_ASSERT(rs_convert_to_int(&s21, &a) == RS_FAILURE);
 		RS_ASSERT(a == 23);
+		
+		rs_string s22 = rs_create(".");
 		RS_ASSERT(rs_convert_to_int(&s22, &a) == RS_FAILURE); // strings should start with a number, '+' or '-' (numbers like .003 don't work)
 		RS_ASSERT(a == 23);
+		
+		rs_string s23 = rs_create("");
 		RS_ASSERT(rs_convert_to_int(&s23, &a) == RS_FAILURE); // if length is 0, function fails
 		RS_ASSERT(a == 23);
+		
+		rs_string s24 = rs_create(NULL);
 		RS_ASSERT(rs_convert_to_int(&s24, &a) == RS_FAILURE); // if buffer is NULL, function fails
 		RS_ASSERT(a == 23);
 		RS_ASSERT(rs_convert_to_int(NULL, &a) == RS_FAILURE); // if parameter is NULL, function fails
 		RS_ASSERT(a == 23);
 
-		rs_string s25 = rs_create("0xFFFFFFFF"); // must start with 0x or 0X
-		rs_string s26 = rs_create("0xFFF");
-		rs_string s27 = rs_create("0xA");
-		rs_string s28 = rs_create("0X0aFa123"); // works with upper case X and lowercase letters too
-		rs_string s29 = rs_create("0x1234");
-		rs_string s30 = rs_create("");
-		rs_string s31 = rs_create(NULL);
-		rs_string s32 = rs_create("FAFAFA"); // doesn't start with 0X
-		rs_string s33 = rs_create("0xAAAAAAAAAA"); // too many digits, must 0x then 8 digits max
 		unsigned int c = 0;
+		rs_string s25 = rs_create("0xFFFFFFFF"); // must start with 0x or 0X
 		RS_ASSERT(rs_convert_hex_to_uint(&s25, &c) == RS_SUCCESS);
 		RS_ASSERT(c == 0xFFFFFFFF);
+		
+		rs_string s26 = rs_create("0xFFF");
 		RS_ASSERT(rs_convert_hex_to_uint(&s26, &c) == RS_SUCCESS);
 		RS_ASSERT(c == 0xFFF);
+		
+		rs_string s27 = rs_create("0xA");
 		RS_ASSERT(rs_convert_hex_to_uint(&s27, &c) == RS_SUCCESS);
 		RS_ASSERT(c == 0xA);
+		
+		rs_string s28 = rs_create("0X0aFa123"); // works with upper case X and lowercase letters too
 		RS_ASSERT(rs_convert_hex_to_uint(&s28, &c) == RS_SUCCESS);
 		RS_ASSERT(c == 0X0aFa123);
+		
+		rs_string s29 = rs_create("0x1234");
 		RS_ASSERT(rs_convert_hex_to_uint(&s29, &c) == RS_SUCCESS);
 		RS_ASSERT(c == 0x1234);
+		
+		rs_string s30 = rs_create("");
 		RS_ASSERT(rs_convert_hex_to_uint(&s30, &c) == RS_FAILURE);
 		RS_ASSERT(c == 0x1234);
+		
+		rs_string s31 = rs_create(NULL);
 		RS_ASSERT(rs_convert_hex_to_uint(&s31, &c) == RS_FAILURE);
 		RS_ASSERT(c == 0x1234);
+		
+		rs_string s32 = rs_create("FAFAFA"); // doesn't start with 0X
 		RS_ASSERT(rs_convert_hex_to_uint(&s32, &c) == RS_FAILURE);
 		RS_ASSERT(c == 0x1234);
+		
+		rs_string s33 = rs_create("0xAAAAAAAAAA"); // too many digits, must 0x then 8 digits max
 		RS_ASSERT(rs_convert_hex_to_uint(&s33, &c) == RS_FAILURE);
 		RS_ASSERT(c == 0x1234);
 		
 		rs_string s34 = rs_create("Hello World\n");
-		rs_string s35 = rs_create("");
-		rs_string s36 = rs_create(NULL);
-		rs_string s37 = rs_create("0");
 		RS_ASSERT(rs_reverse(&s34) == RS_SUCCESS);
 		RS_ASSERT(s34.length == 12);
 		RS_ASSERT(memcmp(s34.buffer, "\ndlroW olleH", s34.length) == 0);
+		
+		rs_string s35 = rs_create("");
 		RS_ASSERT(rs_reverse(&s35) == RS_SUCCESS);
 		RS_ASSERT(s35.length == 0);
 		RS_ASSERT(memcmp(s35.buffer, "", s35.length) == 0); // not necessary
+		
+		rs_string s36 = rs_create(NULL);
 		RS_ASSERT(rs_reverse(&s36) == RS_FAILURE);
 		RS_ASSERT(s36.length == 0);
 		RS_ASSERT(memcmp(s36.buffer, NULL, s36.length) == 0);
+		
+		rs_string s37 = rs_create("0");
 		RS_ASSERT(rs_reverse(&s37) == RS_SUCCESS);
 		RS_ASSERT(s37.length == 1);
 		RS_ASSERT(memcmp(s37.buffer, "0", s37.length) == 0);
@@ -461,16 +498,20 @@ int main(void){
 		RS_ASSERT(rs_is_digit(c1) == RS_FAILURE);
 
 		rs_string s0 = rs_create("h[\\cW5mZ2RPFN4dv:&0");
-		rs_string s1 = rs_create("");
-		rs_string s2 = rs_create(NULL);
 		RS_ASSERT(rs_count_letters(&s0) == 11);
 		RS_ASSERT(rs_count_digits(&s0) == 4);
+		
+		rs_string s1 = rs_create("");
 		RS_ASSERT(rs_count_letters(&s1) == 0);
 		RS_ASSERT(rs_count_digits(&s1) == 0);
+		
+		rs_string s2 = rs_create(NULL);
 		RS_ASSERT(rs_count_letters(&s2) == -1); // If the buffer is NULL, it returns -1
 		RS_ASSERT(rs_count_digits(&s2) == -1);
+		
 		RS_ASSERT(rs_count_letters(NULL) == -1);  // If the parameter is NULL, it returns -1
 		RS_ASSERT(rs_count_digits(NULL) == -1);
+		
 		rs_delete(&s0);
 		rs_delete(&s1);
 		rs_delete(&s2);
@@ -578,31 +619,140 @@ int main(void){
 	}
 	printf("Test SPLITTING STRINGS finished...\n");
 
-	// printf("Test START AND END CHECK...\n");
-	// {
-	// 	rs_string s0 = rs_create("A brown fox jumps over the lazy dog");
-	// 	rs_string s1 = rs_create("n");
-	// 	rs_string s2 = rs_create("");
-	// 	rs_string s3 = rs_create(NULL);
-	// 	// printf("Result(\"A brown fox \") = %i\n", rs_starts_with_substring(&s0, "A brown fox "));
-	// 	// printf("Result(\"jumps over\") = %i\n", rs_starts_with_substring(&s0, "jumps over"));
-	// 	// printf("Result(\"A brown fox jumps over the lazy dog\") = %i\n", rs_starts_with_substring(&s0, "A brown fox jumps over the lazy dog"));
-	// 	// printf("Result(\"over the lazy dog\") = %i\n", rs_ends_with_substring(&s0, "over the lazy dog"));
-	// 	// printf("Result(\"brown fox jumps\") = %i\n", rs_ends_with_substring(&s0, "brown fox jumps"));
-	// 	// printf("Result(\"A brown fox jumps over the lazy dog\") = %i\n", rs_ends_with_substring(&s0, "A brown fox jumps over the lazy dog"));
-	// 	rs_delete(&s0);
-	// 	rs_delete(&s1);
-	// 	rs_delete(&s2);
-	// 	rs_delete(&s3);
-	// }
-	// printf("Test START AND END CHECK finished...\n");
+	printf("\nTest START AND END CHECK...\n");
+	{
+		rs_string s0 = rs_create("A brown fox jumps over the lazy dog");
+		RS_ASSERT(rs_starts_with_substring(&s0, "A brown fox ") == RS_SUCCESS);
+		RS_ASSERT(rs_starts_with_substring(&s0, "jumps over") == RS_FAILURE);
+		RS_ASSERT(rs_starts_with_substring(&s0, "A brown fox jumps over the lazy dog") == RS_SUCCESS);
+		RS_ASSERT(rs_starts_with_substring(&s0, "") == RS_SUCCESS);
+		RS_ASSERT(rs_ends_with_substring(&s0, "over the lazy dog") == RS_SUCCESS);
+		RS_ASSERT(rs_ends_with_substring(&s0, "brown fox jumps") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(&s0, "A brown fox jumps over the lazy dog") == RS_SUCCESS);
+		RS_ASSERT(s0.length == 35);
+		RS_ASSERT(memcmp(s0.buffer, "A brown fox jumps over the lazy dog", s0.length) == 0);
+		
+		rs_string s1 = rs_create("n");
+		RS_ASSERT(rs_ends_with_substring(&s1, "n") == RS_SUCCESS);
+		RS_ASSERT(rs_starts_with_substring(&s1, "N") == RS_FAILURE);
+		RS_ASSERT(rs_starts_with_substring(&s1, "") == RS_SUCCESS);
+		RS_ASSERT(rs_ends_with_substring(&s1, "n") == RS_SUCCESS);
+		RS_ASSERT(rs_ends_with_substring(&s1, "N") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(&s1, "") == RS_SUCCESS);
+		RS_ASSERT(s1.length == 1);
+		RS_ASSERT(memcmp(s1.buffer, "n", s1.length) == 0);
+		
+		rs_string s2 = rs_create("");
+		RS_ASSERT(rs_starts_with_substring(&s2, "") == RS_SUCCESS);
+		RS_ASSERT(rs_ends_with_substring(&s2, "") == RS_SUCCESS);
+		RS_ASSERT(rs_starts_with_substring(&s2, "4") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(&s2, "3") == RS_FAILURE);
+		RS_ASSERT(s2.length == 0);
+		RS_ASSERT(memcmp(s2.buffer, "", s2.length) == 0); // not necessary
 
-	// printf("Test REPLACING CHARACTERS / STRINGS...\n");
-	// {
-	// 	// int rs_replace_character(rs_string* s, const char char_to_replace, const char replacement);
-	// 	// int rs_replace_substring(rs_string* s, const char* substring_to_replace, const char* substring_replacement);
-	// }
-	// printf("Test REPLACING CHARACTERS / STRINGS finished...\n");
+		rs_string s3 = rs_create(NULL);
+		RS_ASSERT(rs_starts_with_substring(&s3, "Hello") == RS_FAILURE);
+		RS_ASSERT(rs_starts_with_substring(&s3, "") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(&s3, "Hello") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(&s3, "") == RS_FAILURE);
+		RS_ASSERT(rs_starts_with_substring(NULL, "Hello") == RS_FAILURE);
+		RS_ASSERT(rs_starts_with_substring(NULL, "") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(NULL, "Hello") == RS_FAILURE);
+		RS_ASSERT(rs_ends_with_substring(NULL, "") == RS_FAILURE);
+		RS_ASSERT(s3.length == 0);
+		RS_ASSERT(s3.buffer == NULL);
+		
+		rs_delete(&s0);
+		rs_delete(&s1);
+		rs_delete(&s2);
+		rs_delete(&s3);
+	}
+	printf("Test START AND END CHECK finished...\n");
+
+	printf("\nTest REPLACING CHARACTERS / STRINGS...\n");
+	{
+		rs_string s0 = rs_create("Hello World\n");
+		RS_ASSERT(rs_replace_character(&s0, 'l', 'o') == RS_SUCCESS);
+		RS_ASSERT(memcmp(s0.buffer, "Heooo Worod\n", s0.length) == 0);
+		RS_ASSERT(s0.length == 12);
+		
+		rs_string s1 = rs_create("\r\n\r\n");
+		RS_ASSERT(rs_replace_character(&s1, '\r', '\n') == RS_SUCCESS);
+		RS_ASSERT(memcmp(s1.buffer, "\n\n\n\n", s1.length) == 0);
+		RS_ASSERT(s1.length == 4);
+
+		rs_string s2 = rs_create("");
+		RS_ASSERT(rs_replace_character(&s2, ' ', 'a') == RS_FAILURE); // if the length is 0, then it fails
+		RS_ASSERT(memcmp(s2.buffer, "", s2.length) == 0); // not necessary
+		RS_ASSERT(s2.length == 0);
+
+		rs_string s3 = rs_create(NULL);
+		RS_ASSERT(rs_replace_character(&s3, ' ', 'a') == RS_FAILURE); // if the buffer is NULL, then it fails
+		RS_ASSERT(memcmp(s3.buffer, NULL, s3.length) == 0); // not necessary
+		RS_ASSERT(s3.length == 0);
+		
+		rs_string s4 = rs_create("Hello World\n");
+		RS_ASSERT(rs_replace_substring(&s4, "Hello", "Hey") == RS_SUCCESS);
+		RS_ASSERT(s4.length == 10);
+		RS_ASSERT(memcmp(s4.buffer, "Hey World\n", s4.length) == 0);
+		
+		rs_string s5 = rs_create("Hello World\n");
+		RS_ASSERT(rs_replace_substring(&s5, "Hello", "Hey Hello") == RS_SUCCESS);
+		RS_ASSERT(s5.length == 16);
+		RS_ASSERT(memcmp(s5.buffer, "Hey Hello World\n", s5.length) == 0);
+
+		rs_string s6 = rs_create("apple apple apple");
+		RS_ASSERT(rs_replace_substring(&s6, "apple", "banana") == RS_SUCCESS);
+		RS_ASSERT(s6.length == 20);
+		RS_ASSERT(memcmp(s6.buffer, "banana banana banana", s6.length) == 0);
+
+		rs_string s7 = rs_create("A brown fox");
+		RS_ASSERT(rs_replace_substring(&s7, "jumps", "over") == RS_FAILURE);
+		RS_ASSERT(s7.length == 11);
+		RS_ASSERT(memcmp(s7.buffer, "A brown fox", s7.length) == 0);
+
+		rs_string s8 = rs_create("Hello World\n");
+		RS_ASSERT(rs_replace_substring(&s8, "World", "") == RS_SUCCESS); // the replacement substring can be empty (to have the effect of removing substrings)
+		RS_ASSERT(s8.length == 7);
+		RS_ASSERT(memcmp(s8.buffer, "Hello \n", s8.length) == 0);
+
+		rs_string s9 = rs_create("Hello World\n");
+		RS_ASSERT(rs_replace_substring(&s9, "", "Hey") == RS_FAILURE); // the substring to replace cannot be empty
+		RS_ASSERT(s9.length == 12);
+		RS_ASSERT(memcmp(s9.buffer, "Hello World\n", s9.length) == 0);
+
+		rs_string s10 = rs_create("A brown fox jumps over the lazy dog");
+		RS_ASSERT(rs_replace_substring(&s10, "A brown fox jumps over the lazy dog", "Hey") == RS_SUCCESS);
+		RS_ASSERT(s10.length == 3);
+		RS_ASSERT(memcmp(s10.buffer, "Hey", s10.length) == 0);
+
+		rs_string s11 = rs_create("Test String");
+		RS_ASSERT(rs_replace_substring(NULL, "a", "B") == RS_FAILURE); // None of the parameters can be NULL
+		RS_ASSERT(rs_replace_substring(&s11, NULL, "B") == RS_FAILURE);
+		RS_ASSERT(rs_replace_substring(&s11, "a", NULL) == RS_FAILURE);
+		RS_ASSERT(s11.length == 11);
+		RS_ASSERT(memcmp(s11.buffer, "Test String", s11.length) == 0);
+
+		rs_string s12 = rs_create("AAA");
+		RS_ASSERT(rs_replace_substring(&s12, "AA", "B") == RS_SUCCESS);
+		RS_ASSERT(s12.length == 2);
+		RS_ASSERT(memcmp(s12.buffer, "BA", s12.length) == 0);
+
+		rs_delete(&s0);
+		rs_delete(&s1);
+		rs_delete(&s2);
+		rs_delete(&s3);
+		rs_delete(&s4);
+		rs_delete(&s5);
+		rs_delete(&s6);
+		rs_delete(&s7);
+		rs_delete(&s8);
+		rs_delete(&s9);
+		rs_delete(&s10);
+		rs_delete(&s11);
+		rs_delete(&s12);
+	}
+	printf("Test REPLACING CHARACTERS / STRINGS finished...\n");
 
 	return 0;
 }
